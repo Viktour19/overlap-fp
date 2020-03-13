@@ -1,0 +1,9 @@
+training
+nohup.out
+.ipynb_checkpoints/preprocessing-checkpoint.ipynb
+.ipynb_checkpoints/training-checkpoint.ipynb
+.ipynb_checkpoints/view-checkpoint.ipynb
+imgs/
+view.ipynb
+pdfs
+training_backup
