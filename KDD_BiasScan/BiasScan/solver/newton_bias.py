@@ -1,5 +1,5 @@
-from score import *
-
+from BiasScan.score_bias import *
+import numpy as np
 
 def newton_q_min(observed_sum, probs, penalty, q_mle):
     """

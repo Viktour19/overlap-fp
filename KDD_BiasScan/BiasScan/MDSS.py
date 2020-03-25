@@ -6,17 +6,21 @@ import sys
 import time
 
 from BiasScan.util.generator import *
-from BiasScan.optim.bisection import *
-from BiasScan.solver.bisection import *
+from BiasScan.optim.bisection_bias import *
+from BiasScan.solver.bisection_bias import *
+
+from BiasScan.score_bias import score as score_bias
 
 # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
 
 class MDSS(object):
-    def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable):
+    def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable, score: str):
         self.optim_q_mle = optim_q_mle
         self.solver_q_min = solver_q_min
         self.solver_q_max = solver_q_max
+        if score == 'bias':
+            score = score_bias
 
     def compute_qs(self, observed_sum, probs, penalty):
         """

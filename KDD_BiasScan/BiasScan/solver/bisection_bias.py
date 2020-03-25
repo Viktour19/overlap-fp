@@ -1,4 +1,4 @@
-from BiasScan.score import *
+from BiasScan.score_bias import *
 
 
 def bisection_q_min(observed_sum, probs, penalty, q_mle):

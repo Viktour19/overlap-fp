@@ -1,5 +1,4 @@
-from score import *
-import matplotlib.pyplot as plt
+from BiasScan.score_bias import *
 
 
 def newton_q_mle(observed_sum: float, probs: np.array):

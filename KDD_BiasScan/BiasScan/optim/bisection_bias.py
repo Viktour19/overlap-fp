@@ -1,4 +1,5 @@
-from BiasScan.score import *
+from BiasScan.score_bias import *
+import numpy as np
 
 
 def bisection_q_mle(observed_sum: float, probs: np.array):
