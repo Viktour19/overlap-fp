@@ -33,7 +33,7 @@ def newton_q_mle(observed_sum: float, probs: np.array, **kwargs):
     if 'direction' in kwargs:
         direction = kwargs['direction']
         
-    if ((direction == 'positive') & (q < 1)) | ((direction != 'negative') & (q > 1)):
+    if ((direction == 'positive') & (q < 1)) | ((direction == 'negative') & (q > 1)):
         return 1
 
     return q

@@ -254,6 +254,10 @@ class MDSS(object):
         total_penalty *= penalty
 
         # Compute and return the penalized score
+        logging.warning(str(current_q_mle) + " " + str(self.alpha) + " " + str(current_q_mle/self.alpha) + " " + 
+                        str(1-current_q_mle) + " " + str(1-self.alpha) + " " + str((1 - current_q_mle)/(1 - self.alpha)) + " " +
+                         str(observed_sum))
+
         penalized_score = self.score(observed_sum, probs, total_penalty, current_q_mle, alpha=self.alpha)
         return penalized_score
 

@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+
 def q_mle(observed_sum: float, probs: np.array, **kwargs):
     """
     Computes the q which maximizes score (q_mle).
@@ -18,7 +19,7 @@ def q_mle(observed_sum: float, probs: np.array, **kwargs):
         direction = kwargs['direction']
     q = observed_sum/len(probs)
 
-    if ((direction == 'positive') & (q < 1)) | ((direction != 'negative') & (q > 1)):
+    if ((direction == 'positive') & (q < alpha)) | ((direction == 'negative') & (q > alpha)):
         return alpha
     
     return q
