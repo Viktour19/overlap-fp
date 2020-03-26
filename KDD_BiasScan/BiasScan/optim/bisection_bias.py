@@ -2,7 +2,7 @@ from BiasScan.score_bias import *
 import numpy as np
 
 
-def bisection_q_mle(observed_sum: float, probs: np.array):
+def bisection_q_mle(observed_sum: float, probs: np.array, **kwargs):
     """
     Computes the q which maximizes score (q_mle).
     Computes q for which slope dscore/dq = 0, using the fact that slope is monotonically decreasing.
@@ -27,5 +27,14 @@ def bisection_q_mle(observed_sum: float, probs: np.array):
         else:
             q_temp_max = q_temp_max - (q_temp_max - q_temp_min) / 2
 
-    return (q_temp_min + q_temp_max) / 2
+    q = (q_temp_min + q_temp_max) / 2
+    
+    direction = None
+    if 'direction' in kwargs:
+        direction = kwargs['direction']
+        
+    if ((direction == 'positive') & (q < 1)) | ((direction == 'negative') & (q > 1)):
+        return 1
+        
+    return q
 

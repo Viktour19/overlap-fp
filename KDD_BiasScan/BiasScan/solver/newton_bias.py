@@ -1,7 +1,7 @@
 from BiasScan.score_bias import *
 import numpy as np
 
-def newton_q_min(observed_sum, probs, penalty, q_mle):
+def newton_q_min(observed_sum: float, probs: np.array, penalty: float, q_mle: float, **kwargs):
     """
     Compute q for which score = 0, using the fact that score is monotonically increasing for q > q_mle.
     q_max is computed via newton-raphson.
@@ -17,17 +17,17 @@ def newton_q_min(observed_sum, probs, penalty, q_mle):
         return 1e-6
 
     q = 1e-6
-    f = score(observed_sum, probs, penalty, q)
+    f = score_bias(observed_sum, probs, penalty, q)
 
     while np.abs(f) > 1e-6:
         df = dscore(observed_sum, probs, q)
         q = q - f / df
-        f = score(observed_sum, probs, penalty, q)
+        f = score_bias(observed_sum, probs, penalty, q)
 
     return q
 
 
-def newton_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle: float):
+def newton_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle: float, **kwargs):
     """
     Compute q for which score = 0, using the fact that score is monotonically decreasing for q > q_mle.
     q_max is computed via newton-raphson.
@@ -43,11 +43,11 @@ def newton_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle: fl
         return 1e6
 
     q = q_mle + 1
-    f = score(observed_sum, probs, penalty, q)
+    f = score_bias(observed_sum, probs, penalty, q)
 
     while np.abs(f) > 1e-6:
         df = dscore(observed_sum, probs, q)
         q = q - f / df
-        f = score(observed_sum, probs, penalty, q)
+        f = score_bias(observed_sum, probs, penalty, q)
 
     return q

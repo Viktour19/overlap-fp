@@ -44,7 +44,7 @@ def dscore(observed_sum: float, probs: np.array, q: float):
     return observed_sum / q - (probs / (1 - probs + q * probs)).sum()
 
 
-def score(observed_sum: float, probs: np.array, penalty: float, q: float):
+def score_bias(observed_sum: float, probs: np.array, penalty: float, q: float, **kwargs):
     """
     Computes bias score for given q
 
