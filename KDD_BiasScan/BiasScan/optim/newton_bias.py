@@ -1,8 +1,7 @@
-from score import *
-import matplotlib.pyplot as plt
+from BiasScan.score_bias import *
 
 
-def newton_q_mle(observed_sum: float, probs: np.array):
+def newton_q_mle(observed_sum: float, probs: np.array, **kwargs):
     """
     Computes the q which maximizes score (q_mle).
     Computes q for which slope dscore/dq = 0, using the fact that slope is monotonically decreasing.
@@ -29,5 +28,12 @@ def newton_q_mle(observed_sum: float, probs: np.array):
         ddf = dq_dscore(probs, q)
         q = q - df / ddf
         df = q_dscore(observed_sum, probs, q)
+
+    direction = None
+    if 'direction' in kwargs:
+        direction = kwargs['direction']
+        
+    if ((direction == 'positive') & (q < 1)) | ((direction == 'negative') & (q > 1)):
+        return 1
 
     return q

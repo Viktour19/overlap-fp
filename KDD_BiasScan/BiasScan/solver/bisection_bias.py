@@ -1,7 +1,7 @@
-from BiasScan.score import *
+from BiasScan.score_bias import *
 
 
-def bisection_q_min(observed_sum, probs, penalty, q_mle):
+def bisection_q_min(observed_sum: float, probs: np.array, penalty: float, q_mle: float, **kwargs):
     """
     Compute q for which score = 0, using the fact that score is monotonically increasing for q > q_mle.
     q_max is computed via binary search.
@@ -19,7 +19,7 @@ def bisection_q_min(observed_sum, probs, penalty, q_mle):
     while np.abs(q_temp_max - q_temp_min) > 1e-6:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
-        if np.sign(score(observed_sum, probs, penalty, q_temp_mid)) > 0:
+        if np.sign(score_bias(observed_sum, probs, penalty, q_temp_mid)) > 0:
             q_temp_max = q_temp_max - (q_temp_max - q_temp_min) / 2
         else:
             q_temp_min = q_temp_min + (q_temp_max - q_temp_min) / 2
@@ -27,7 +27,7 @@ def bisection_q_min(observed_sum, probs, penalty, q_mle):
     return (q_temp_min + q_temp_max) / 2
 
 
-def bisection_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle: float):
+def bisection_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle: float, **kwargs):
     """
     Compute q for which score = 0, using the fact that score is monotonically decreasing for q > q_mle.
     q_max is computed via binary search.
@@ -45,7 +45,7 @@ def bisection_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle:
     while np.abs(q_temp_max - q_temp_min) > 1e-6:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
-        if np.sign(score(observed_sum, probs, penalty, q_temp_mid)) > 0:
+        if np.sign(score_bias(observed_sum, probs, penalty, q_temp_mid)) > 0:
             q_temp_min = q_temp_min + (q_temp_max - q_temp_min) / 2
         else:
             q_temp_max = q_temp_max - (q_temp_max - q_temp_min) / 2

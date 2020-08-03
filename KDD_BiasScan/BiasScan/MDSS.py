@@ -6,18 +6,23 @@ import sys
 import time
 
 from BiasScan.util.generator import *
-from BiasScan.optim.bisection import *
-from BiasScan.solver.bisection import *
+from BiasScan.optim.bisection_bias import *
+from BiasScan.solver.bisection_bias import *
+
+from BiasScan.solver.bisection_bj import *
+
 
 # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
 
 class MDSS(object):
-    def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable):
+    def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable, score: Callable, alpha: float= None):
         self.optim_q_mle = optim_q_mle
         self.solver_q_min = solver_q_min
         self.solver_q_max = solver_q_max
-
+        self.score = score
+        self.alpha = alpha
+    
     def compute_qs(self, observed_sum, probs, penalty):
         """
         Computes q_mle, q_min, q_max
@@ -28,13 +33,13 @@ class MDSS(object):
         :return: flag that indicates if qmin and qmax exist, qmle, qmin, qmax
         """
         # compute q_mle
-        q_mle = self.optim_q_mle(observed_sum, probs)
+        q_mle = self.optim_q_mle(observed_sum, probs, direction=None, alpha=self.alpha)
 
         # if q_mle is greater the 0, then compute the other two roots
-        if score(observed_sum, probs, penalty, q_mle) > 0:
+        if self.score(observed_sum, probs, penalty, q_mle, alpha=self.alpha) > 0:
             exist = 1
-            q_min = self.solver_q_min(observed_sum, probs, penalty, q_mle)
-            q_max = self.solver_q_max(observed_sum, probs, penalty, q_mle)
+            q_min = self.solver_q_min(observed_sum, probs, penalty, q_mle, alpha=self.alpha)
+            q_max = self.solver_q_max(observed_sum, probs, penalty, q_mle, alpha=self.alpha)
         else:
             # there are no roots
             exist = 0
@@ -84,6 +89,8 @@ class MDSS(object):
             # all probabilities p_i
             probs = group.iloc[:, -1].values
 
+            # logging.warning(str(observed_sum) + str( probs) + str(penalty))
+            
             # compute q_min and q_max for the attribute value
             exist, q_mle, q_min, q_max = self.compute_qs(observed_sum, probs, penalty)
 
@@ -164,19 +171,17 @@ class MDSS(object):
 
             # compute the MLE value of q, making sure to only consider the desired direction (positive or negative)
             probs = np.asarray(probs)
-            current_q_mle = self.optim_q_mle(observed_sum, probs)
-
-            if ((direction == 'positive') & (current_q_mle < 1)) | ((direction != 'positive') & (current_q_mle > 1)):
-                current_q_mle = 1
+            current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
 
             # Compute the score for the given subset at the MLE value of q.
             # Notice that each included value gets a penalty, so the total penalty
             # is multiplied by the number of included values.
-            current_score = score(
+            current_score = self.score(
                 observed_sum=observed_sum,
                 probs=probs,
                 penalty=penalty * len(names),
-                q=current_q_mle
+                q=current_q_mle,
+                alpha=self.alpha
             )
 
             # keep track of the best score, best q, and best subset of attribute values found so far
@@ -190,17 +195,16 @@ class MDSS(object):
         # from all other attributes, just considering the current attribute.)
 
         # compute the MLE value of q, making sure to only consider the desired direction (positive or negative)
-        current_q_mle = self.optim_q_mle(all_observed_sum, all_probs)
-        if ((direction == 'positive') & (current_q_mle < 1)) | ((direction != 'positive') & (current_q_mle > 1)):
-            current_q_mle = 1
+        current_q_mle = self.optim_q_mle(all_observed_sum, all_probs, direction=direction, alpha=self.alpha)
 
         # Compute the score for the given subset at the MLE value of q.
         # Again, the penalty (for that attribute) is 0 when all attribute values are included.
-        current_score = score(
+        current_score = self.score(
             observed_sum=all_observed_sum,
             probs=all_probs,
             penalty=0,
-            q=current_q_mle
+            q=current_q_mle,
+            alpha=self.alpha
         )
 
         # Keep track of the best score, best q, and best subset of attribute values found.
@@ -241,9 +245,7 @@ class MDSS(object):
         probs = temp_df.iloc[:, -1].values
 
         # compute the MLE value of q, making sure to only consider the desired direction (positive or negative)
-        current_q_mle = self.optim_q_mle(observed_sum, probs)
-        if ((direction == 'positive') & (current_q_mle < 1)) | ((direction != 'positive') & (current_q_mle > 1)):
-            current_q_mle = 1
+        current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
 
         # total_penalty = penalty * sum of list lengths in current_subset
         total_penalty = 0
@@ -252,7 +254,11 @@ class MDSS(object):
         total_penalty *= penalty
 
         # Compute and return the penalized score
-        penalized_score = score(observed_sum, probs, total_penalty, current_q_mle)
+        logging.warning(str(current_q_mle) + " " + str(self.alpha) + " " + str(current_q_mle/self.alpha) + " " + 
+                        str(1-current_q_mle) + " " + str(1-self.alpha) + " " + str((1 - current_q_mle)/(1 - self.alpha)) + " " +
+                         str(observed_sum))
+
+        penalized_score = self.score(observed_sum, probs, total_penalty, current_q_mle, alpha=self.alpha)
         return penalized_score
 
     def bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
