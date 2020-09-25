@@ -1,0 +1,131 @@
+RS_s = BCSRulesetEstimator(n_ref_multiplier=1, alpha=.9, lambda0=.7, lambda1=0)
+RS_o = BCSRulesetEstimator(n_ref_multiplier=0, alpha=.9, lambda0=.7, lambda1=0)
+
+```
+not Main floor material = "Other" 
+& not Ethnicity = Rendille 
+& not Relationship to household head = Mother-in-law 
+& not Type of cooking fuel = Agricultural crop 
+& not Current contraceptive method = Lactational amenorrhea (LAM)
+& not Unmet need = Never had sex
+& not Unmet need = Limiting failure
+& not Unmet need (definition 2) = Never had sex
+& not Unmet need (definition 2) = Limiting failure
+& Flag for last period <= "N > interval since birth"
+```
+
+```
+Current contraceptive method = Pill
+or Current contraceptive method = IUD
+or Current contraceptive method = Injections
+or Current contraceptive method = Implants/Norplant
+or Cohabitation duration (grouped) = "10-14"
+or Cohabitation duration (grouped) = "15-19"
+or Cohabitation duration (grouped) = "20-24"
+or Cohabitation duration (grouped) = "25-29"
+or Unmet need = "Unmet need for limiting"
+```
+
+support = X_df[(~X_df["v127_96"].astype(bool) & ~X_df["v131_22"].astype(bool) & 
+                ~X_df["v150_7"].astype(bool) & ~X_df["v161_10"].astype(bool) &
+                ~X_df["v312_13"].astype(bool) & ~X_df["v624_0"].astype(bool) & ~X_df["v624_6"].astype(bool) &
+                ~X_df["v626_0"].astype(bool) & ~X_df["v626_6"].astype(bool) & (X_df["v227"] <= 1.000))]
+
+propensity =   X_df[(X_df["v312_1"].astype(bool))
+| (X_df["v312_2"].astype(bool))
+| (X_df["v312_3"].astype(bool))
+| (X_df["v312_11"].astype(bool))
+| (X_df["v513_3"].astype(bool))
+| (X_df["v513_4"].astype(bool))
+| (X_df["v513_5"].astype(bool))
+| (X_df["v513_6"].astype(bool))
+| (X_df["v624_2"].astype(bool))]
+
+RS_s = BCSRulesetEstimator(n_ref_multiplier=1, alpha=.9, lambda0=.9, lambda1=0)
+RS_o = BCSRulesetEstimator(n_ref_multiplier=0, alpha=.9, lambda0=.9, lambda1=0)
+
+Support =   (~X_df["v127_96"].astype(bool) & ~X_df["v131_22"].astype(bool) & ~X_df["v150_7"].astype(bool) & ~X_df["v312_7"].astype(bool) & ~X_df["v312_13"].astype(bool) & ~X_df["v624_0"].astype(bool) & ~X_df["v624_6"].astype(bool) & ~X_df["v626_0"].astype(bool) & ~X_df["v626_6"].astype(bool) & (X_df["v227"] <= 1.000))
+
+Propensity = ((X_df["v191"] <= 149909.800))
+
+knn_overlap = pd.merge(support, propensity, how='inner')
+print(knn_overlap.head())
+
+
+```
+not Source of drinking water = "Tanker truck"
+& not Type of toilet facility = "Flush to somewhere else"
+& not Main floor material = "Dung"
+& not Main floor material = "Wood planks"
+& not Current contraceptive method = "Female condom"
+& not Pattern of use = "Used before last birth"
+& not Pattern of use = "Never used"
+
+or 
+not Main floor material = "Wood planks"
+& not Main roof material = "Tin cans"
+& not Ethnicity = "Kisii"
+& not Ethnicity = "Maasai"
+& not Ethnicity = "Mbere"
+& not De jure region of residence "Mombasa"
+& not Current contraceptive method = "Female condom"
+& not Pattern of use = "Used before last birth"
+& not Pattern of use = "Never used"
+& not Desire for more children = "Declared infecund"
+```
+
+
+support =  X_df[(~X_df["v131_22"].astype(bool) & ~X_df["v150_7"].astype(bool) & ~X_df["v312_7"].astype(bool) & ~X_df["v312_13"].astype(bool) & ~X_df["v532_4"].astype(bool) & ~X_df["v624_0"].astype(bool) & ~X_df["v624_6"].astype(bool) & ~X_df["v626_0"].astype(bool) & ~X_df["v626_6"].astype(bool) & (X_df["v227"] <= 1.000))]
+
+propensity =   X_df[(~X_df["v113_61"].astype(bool) & ~X_df["v116_14"].astype(bool) & ~X_df["v127_12"].astype(bool) & ~X_df["v127_21"].astype(bool) & ~X_df["v312_14"].astype(bool) & ~X_df["v361_3"].astype(bool) & ~X_df["v361_4"].astype(bool))
+| (~X_df["v127_21"].astype(bool) & ~X_df["v129_22"].astype(bool) & ~X_df["v131_5"].astype(bool) & ~X_df["v131_8"].astype(bool) & ~X_df["v131_21"].astype(bool) & ~X_df["v139_7"].astype(bool) & ~X_df["v312_14"].astype(bool) & ~X_df["v361_3"].astype(bool) & ~X_df["v361_4"].astype(bool) & ~X_df["v605_7"].astype(bool))]
+
+
+
+clr_overlap = pd.merge(support, propensity, how='inner')
+print(clr_overlap.head())
+
+
+RS_s = BCSRulesetEstimator(n_ref_multiplier=1, alpha=.9, lambda0=.9, lambda1=0, CNF=False)
+RS_o = BCSRulesetEstimator(n_ref_multiplier=0, alpha=.9, lambda0=.7, lambda1=0, CNF=False)
+
+
+Current_use_of_injectables=0
+
+support = X_df_[(X_df_["v227"] <= 0.000)]
+propensity = X_df_[(~X_df_["v501_0"].astype(bool))]
+
+knn_overlap = pd.merge(support, propensity, how='inner')
+print(knn_overlap.head())
+
+
+
+support =  X_df_[(X_df_["v227"] <= 0.000)]
+propensity =   X_df_[(~X_df_["v129_22"].astype(bool) & ~X_df_["v129_33"].astype(bool) & ~X_df_["v131_96"].astype(bool) & ~X_df_["v150_4"].astype(bool) & ~X_df_["v150_5"].astype(bool) & ~X_df_["v153_1"].astype(bool) & ~X_df_["v313_1"].astype(bool) & ~X_df_["v361_3"].astype(bool) & ~X_df_["v361_4"].astype(bool) & ~X_df_["v605_7"].astype(bool))]
+
+
+clr_overlap = pd.merge(support, propensity, how='inner')
+print(clr_overlap.head())
+
+
+RS_s = BCSRulesetEstimator(n_ref_multiplier=1, alpha=.9, lambda0=.9, lambda1=0, CNF=False)
+RS_o = BCSRulesetEstimator(n_ref_multiplier=0, alpha=.9, lambda0=.9, lambda1=0, CNF=False)
+
+
+Current_use_of_injectables=1
+
+support = X_df_[(~X_df_["v131_18"].astype(bool) & ~X_df_["v131_21"].astype(bool) & ~X_df_["v161_6"].astype(bool) & ~X_df_["v161_95"].astype(bool) & ~X_df_["v602_5"].astype(bool) & ~X_df_["v605_7"].astype(bool) & (X_df_["v205"] <= 5.000) & (X_df_["v614"] <= 6.000) & (X_df_["v628"] <= 5.000))]
+
+
+propensity = X_df_[(X_df_["v191"] > -70176.200)]
+
+knn_overlap = pd.merge(support, propensity, how='inner')
+print(knn_overlap.head())
+
+support =  X_df_[(~X_df_["v116_14"].astype(bool) & ~X_df_["v150_11"].astype(bool) & ~X_df_["v161_10"].astype(bool) & ~X_df_["v536_0"].astype(bool) & ~X_df_["v602_5"].astype(bool) & ~X_df_["v605_7"].astype(bool) & (X_df_["v205"] <= 5.000) & (X_df_["v614"] <= 6.000) & (X_df_["v628"] <= 5.000))]
+
+propensity =   X_df[(~X_df["v129_22"].astype(bool) & ~X_df["v129_33"].astype(bool) & ~X_df["v131_96"].astype(bool) & ~X_df["v150_4"].astype(bool) & ~X_df["v150_5"].astype(bool) & ~X_df["v153_1"].astype(bool) & ~X_df["v313_1"].astype(bool) & ~X_df["v361_3"].astype(bool) & ~X_df["v361_4"].astype(bool) & ~X_df["v605_7"].astype(bool))]
+
+
+clr_overlap = pd.merge(support, propensity, how='inner')
+print(clr_overlap.head())
