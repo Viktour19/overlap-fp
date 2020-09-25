@@ -1,5 +1,5 @@
 import numpy as np
-
+from typing import Callable
 
 def q_dscore(observed_sum, probs, q):
     """
@@ -61,3 +61,42 @@ def score_bias(observed_sum: float, probs: np.array, penalty: float, q: float, *
 
     return observed_sum * np.log(q) - np.log(1 - probs + q * probs).sum() - penalty
 
+
+def compute_qs_bias(optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable, observed_sum: float, probs: np.array, penalty: float, **kwargs):
+    """
+    Computes q_mle, q_min, q_max
+    :param optim_q_mle mle method
+    :param solver_q_min method to find root on lhs of qmle
+    :param solver_q_max method to find root on rhs of qmle
+    :param observed_sum: sum of observed binary outcomes for all i
+    :param probs: predicted probabilities p_i for each data element i
+    :param penalty: penalty term. Should be positive
+    :return: flag that indicates if qmin and qmax exist, qmle, qmin, qmax
+    """
+    # compute q_mle
+    q_mle = optim_q_mle(observed_sum, probs, direction=None)
+
+    # if q_mle is greater the 0, then compute the other two roots
+    if score_bias(observed_sum=observed_sum, probs=probs, penalty=penalty, q=q_mle) > 0:
+        exist = 1
+        q_min = solver_q_min(observed_sum, probs, penalty, q_mle)
+        q_max = solver_q_max(observed_sum, probs, penalty, q_mle)
+    else:
+        # there are no roots
+        exist = 0
+        q_min = 0
+        q_max = 0
+    # only consider the desired direction, positive or negative
+    if exist:
+        if direction == 'positive':
+            if q_max < 1:
+                exist = 0
+            elif q_min < 1:
+                q_min = 1
+        else:
+            if q_min > 1:
+                exist = 0
+            elif q_max > 1:
+                q_max = 1
+
+    return exist, q_mle, q_min, q_max
