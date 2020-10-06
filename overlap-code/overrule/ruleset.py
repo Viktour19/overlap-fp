@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score
 
 # For BCS
 from .BCS.overlap_boolean_rule import OverlapBooleanRule
-from .BCS.load_process_data_BCS import extract_target, FeatureBinarizer
+from .BCS.load_process_data_BCS import extract_target, FeatureBinarizer, FeatureBinarizerFromTrees
 
 # Overrule imports
 from .utils import sampleUnif, sample_reference, rule_str
@@ -181,7 +181,7 @@ class BCSRulesetEstimator(RulesetEstimator):
 
     def __init__(self, lambda0=0., lambda1=0., cat_cols=[],
                  n_ref_multiplier=1., negations=True, num_thresh=9,
-                 seed=None, ref_range=None, thresh_override=None, **kwargs):
+                 seed=None, ref_range=None, thresh_override=None, binarizer='default', **kwargs):
         """Initializes the estimator
 
         @args:
@@ -224,6 +224,7 @@ class BCSRulesetEstimator(RulesetEstimator):
         # Bookkeeping
         self.refSamples = None
         self.overlapSamples = None
+        self.binarizer = binarizer
 
         # Initialize estimators
         self.init_estimator_()
@@ -246,10 +247,13 @@ class BCSRulesetEstimator(RulesetEstimator):
         """ Init rule set estimator and binarizer """
         self.M = OverlapBooleanRule(lambda0=self.lambda0,
                     lambda1=self.lambda1, **self.kwargs)
-
-        self.FeatureBinarizer = FeatureBinarizer(negations=self.negations,
-                    colCateg=self.cat_cols, numThresh=self.num_thresh,
-                    threshOverride=self.thresh_override)
+        
+        if self.binarizer == 'default':
+            self.FeatureBinarizer = FeatureBinarizer(negations=self.negations,
+                       colCateg=self.cat_cols, numThresh=self.num_thresh,
+                       threshOverride=self.thresh_override)
+        elif self.binarizer == 'tree':
+            self.FeatureBinarizer = FeatureBinarizerFromTrees(colCateg=self.cat_cols, randomState=self.seed)
 
     def fit(self, x, o):
         """ Fit the overlap region based on a sample x and an indicator for
@@ -281,9 +285,14 @@ class BCSRulesetEstimator(RulesetEstimator):
         o = np.hstack([o, -np.ones(nRef)])
 
         # Binarize features (fit to data only)
-        self.FeatureBinarizer.fit(data.iloc[:n])
+        if self.binarizer == 'tree':
+            self.FeatureBinarizer.fit(data.iloc[:n], o[:n])
+        else:
+            self.FeatureBinarizer.fit(data.iloc[:n])
+        
         X = self.FeatureBinarizer.transform(data)
-
+        print(X.shape)
+        
         # Fit estimator
         self.M.fit(X, o)
 
