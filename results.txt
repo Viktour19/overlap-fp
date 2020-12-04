@@ -328,3 +328,66 @@ Rules stats overlap: [{'p_covered': 0.48842592592592593, 'n_covered': 1688.0, 'r
 Number of Rules: 9
 Number of Literals: 61
 AUC between rules and base estimator (propensity): 0.8915094191891512
+Time: 1607092571.7463727
+Time: 1607092579.4906955
+Binarizer: tree, tree
+Params (knn): N_REF_MULT_s 0.3, N_REF_MULT_o 0, ALPHA_s 0.99, ALPHA_o 0.9, LAMBDA0_s 0.1,                 LAMBDA1_s 0.001, LAMBDA0_o 1e-07, LAMBDA1_o 1e-07, B 28, CNF False
+
+Number of reference samples: 296572
+Complexity: (2, 9)
+Rules support:   ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] <= 46.263) & ~X_df["v127_97"].astype(bool))| ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] > 46.263) & X_df["v127_97"].astype(bool) & (X_df["v202"] <= 2.500) & ~X_df["v312_6"].astype(bool) & ~X_df["v513_3"].astype(bool))
+
+Time: 1607092586.0606103
+Binarizer: tree, tree
+Params (knn): N_REF_MULT_s 0.3, N_REF_MULT_o 0, ALPHA_s 0.99, ALPHA_o 0.9, LAMBDA0_s 0.1,                 LAMBDA1_s 0.001, LAMBDA0_o 1e-07, LAMBDA1_o 1e-07, B 28, CNF False
+
+Number of reference samples: 296572
+Complexity: (2, 9)
+Rules support:   ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] <= 46.263) & ~X_df["v127_97"].astype(bool))| ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] > 46.263) & X_df["v127_97"].astype(bool) & (X_df["v202"] <= 2.500) & ~X_df["v312_6"].astype(bool) & ~X_df["v513_3"].astype(bool))
+
+Rules stats support: [{'p_covered': 0.916799433528058, 'n_covered': 5179.0, 'rule': [('BirthCount_index', '>', -5.327539), ('Residence_index', '<=', 46.26276), ('v127_97', 'not', '')]}, {'p_covered': 0.013630731102850062, 'n_covered': 77.0, 'rule': [('BirthCount_index', '>', -5.327539), ('Residence_index', '>', 46.26276), ('v127_97', '', ''), ('v202', '<=', 2.5), ('v312_6', 'not', ''), ('v513_3', 'not', '')]}]
+
+Number of Rules: 3
+Number of Literals: 12
+AUC: Coverage of data points (TPR) to Coverage of reference points: (FPR): 0.83150556152455
+AUC between rules and base estimator (propensity): 0.9509699234739277
+
+Time: 1607095402.373541
+Binarizer: tree, tree
+Params (knn): N_REF_MULT_s 0.3, N_REF_MULT_o 0, ALPHA_s 0.99, ALPHA_o 0.9, LAMBDA0_s 0.1,                 LAMBDA1_s 0.001, LAMBDA0_o 1e-07, LAMBDA1_o 1e-07, B 28, CNF False
+
+Number of reference samples: 296572
+Complexity: (2, 7)
+Rules support:   ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] <= 46.263) & ~X_df["v128_22"].astype(bool) & (X_df["v202"] > 2.500) & ~X_df["v312_6"].astype(bool))| ((X_df["BirthCount_index"] > -5.328) & (X_df["v202"] <= 2.500))
+
+Time: 1607095417.4522588
+Binarizer: tree, tree
+Params (knn): N_REF_MULT_s 0.3, N_REF_MULT_o 0, ALPHA_s 0.99, ALPHA_o 0.9, LAMBDA0_s 0.1,                 LAMBDA1_s 0.001, LAMBDA0_o 1e-07, LAMBDA1_o 1e-07, B 28, CNF False
+
+Number of reference samples: 296572
+Complexity: (2, 7)
+Rules support:   ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] <= 46.263) & ~X_df["v128_22"].astype(bool) & (X_df["v202"] > 2.500) & ~X_df["v312_6"].astype(bool))| ((X_df["BirthCount_index"] > -5.328) & (X_df["v202"] <= 2.500))
+
+Time: 1607095429.907001
+Binarizer: tree, tree
+Params (knn): N_REF_MULT_s 0.3, N_REF_MULT_o 0, ALPHA_s 0.99, ALPHA_o 0.9, LAMBDA0_s 0.1,                 LAMBDA1_s 0.001, LAMBDA0_o 1e-07, LAMBDA1_o 1e-07, B 28, CNF False
+
+Number of reference samples: 296572
+Complexity: (2, 7)
+Rules support:   ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] <= 46.263) & ~X_df["v128_22"].astype(bool) & (X_df["v202"] > 2.500) & ~X_df["v312_6"].astype(bool))| ((X_df["BirthCount_index"] > -5.328) & (X_df["v202"] <= 2.500))
+
+Time: 1607095493.0695724
+Binarizer: tree, tree
+Params (knn): N_REF_MULT_s 0.3, N_REF_MULT_o 0, ALPHA_s 0.99, ALPHA_o 0.9, LAMBDA0_s 0.1,                 LAMBDA1_s 0.001, LAMBDA0_o 1e-07, LAMBDA1_o 1e-07, B 28, CNF False
+
+Number of reference samples: 296572
+Complexity: (2, 7)
+Rules support:   ((X_df["BirthCount_index"] > -5.328) & (X_df["Residence_index"] <= 46.263) & ~X_df["v128_22"].astype(bool) & (X_df["v202"] > 2.500) & ~X_df["v312_6"].astype(bool))| ((X_df["BirthCount_index"] > -5.328) & (X_df["v202"] <= 2.500))
+
+Rules stats support: [{'p_covered': 0.12426978226234732, 'rule': [('BirthCount_index', '>', -5.327539), ('Residence_index', '<=', 46.26276), ('v128_22', 'not', ''), ('v202', '>', 2.5), ('v312_6', 'not', '')], 'n_covered': 702.0}, {'p_covered': 0.7905824039653035, 'rule': [('BirthCount_index', '>', -5.327539), ('v202', '<=', 2.5)], 'n_covered': 4466.0}]
+
+Number of Rules: 8
+Number of Literals: 37
+AUC: Coverage of data points (TPR) to Coverage of reference points: (FPR): 0.7921542535605298
+AUC between rules and base estimator (propensity): 0.8696282992977642
+

@@ -116,7 +116,7 @@ class PositiviTree:
         dtc_kws = self.dtc.get_params().copy()          # Each tree in forest will ideally be similar to the main DTC
 
         # Drop DecisionTreeClassifier param that is not relevant for RandomForestClassifier:
-        dtc_kws.pop('presort')
+#         dtc_kws.pop('presort')
         if dtc_kws.pop('splitter') == "best":
             RandomForest = RandomForestClassifier
         else:   # splitter == "random"

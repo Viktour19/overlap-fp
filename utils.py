@@ -5,8 +5,10 @@ import sys
 # sys.path.append('./overlap-code')
 # from exps.supp_synthetic.synth_utils import compliance
 
-def get_data():
-    data = pd.read_csv('/home/victora/PositivityViolation/data/fp_injectables_data.csv')
+def get_data(data=None, cols=None):
+    
+    if data is None:
+        data = pd.read_csv('/home/victora/PositivityViolation/data/fp_injectables_data.csv')
 
     encoding_dict = {'O': ['v106', 'v133', 'v149', 'v157', 'v158', 'v159', 'v190', 'v301'],
                      'L': ['v101', 'v102', 'v113', 'v116', 'v119', 'v120', 'v121',
@@ -21,17 +23,21 @@ def get_data():
                            'v215', 'v218', 'v219', 'v220', 'v224', 'v226', 'v227', 'v235',
                            'v238', 'v525', 'v531', 'v613', 'v614', 'v627', 'v628', 'v629', 
                            'v115', 'v104']}
+    if cols is None:
+        remove = ['v213', 'v210']
+        X_ = data[data.columns[:-2]]
+        X = X_.drop(columns=remove)
+        X = X.apply(lambda x: x.fillna(x.median()),axis='rows')
+        c = X.corr().abs()
+        c = c * np.tri(c.shape[0], c.shape[1], -1)
+        c = c.transpose()
 
-    remove = ['v213', 'v210']
-    X_ = data[data.columns[:-2]]
-    X = X_.drop(columns=remove)
-    X = X.apply(lambda x: x.fillna(x.median()),axis='rows')
-    c = X.corr().abs()
-    c = c * np.tri(c.shape[0], c.shape[1], -1)
-    c = c.transpose()
-
-    corr_cols = [col for col in c.columns if any(c[col] > .96)]
-    X.drop(columns=corr_cols, inplace=True)
+        corr_cols = [col for col in c.columns if any(c[col] > .96)]
+        X.drop(columns=corr_cols, inplace=True)
+    else:
+        X = data[data.columns[:-2]]
+        X = X[cols]
+        X = X.apply(lambda x: x.fillna(x.median()),axis='rows')
 
     y = data['outcome'] * 1
     a = data['treatment'] * 1
@@ -52,6 +58,10 @@ def get_data():
     # Select the discrete features
     dis_features = encoding_dict['N']
     dis_features = list(set(dis_features).intersection(set(X.columns)))
+    index_cols = [col for col in X.columns if '_index' in col]
+    
+    dis_features = dis_features + index_cols 
+    
     dis_data = X[dis_features].values
 
     # Combine all the features
