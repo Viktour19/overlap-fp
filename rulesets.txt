@@ -1,0 +1,222 @@
+Kenya
+Support: [['Education in single years <= 14 and',
+  'Current use by method type is not "Traditional method" and',
+  'Desire for more children is not "Wants, unsure timing" and',
+  'Desire for more children is not "Sterilized (respondent or partner)"'],
+ ['Current use by method type is not "Traditional method" and',
+  'Desire for more children is not "Wants, unsure timing" and',
+  'Desire for more children is not "Sterilized (respondent or partner)"']]
+
+CLR:0.7641262819223809: [["Respondent's current age <= 40 and",
+  'Current use by method type is not "Folkloric method" and',
+  'Currently/formerly/never in union is  "Currently in union/living with a man" and',
+  'Unmet need is not "Limiting failure"'],
+ ['Highest educational level <= 2 and',
+  'Wealth index combined <= 4 and',
+  'Current use by method type is not "Folkloric method" and',
+  'Unmet need is not "Limiting failure"'],
+ ["Respondent's current age <= 40 and",
+  'Highest educational level <= 2 and',
+  'Current use by method type is not "Folkloric method" and',
+  'Currently/formerly/never in union is not "Never in union" and',
+  'Unmet need is not "Limiting failure"']]
+  
+KNN:0.7850392117434144: [['Education in single years <= 14 and',
+  'Current use by method type is not "Folkloric method" and',
+  'Cohabitation duration (grouped) is not "Never married"'],
+ ["Respondent's current age <= 45 and",
+  'Cohabitation duration (grouped) is not "Never married"'],
+ ['Education in single years <= 12 and',
+  'Total children ever born > 0 and',
+  'Current use by method type is not "Folkloric method"']]
+  
+Ptree:0.9368590388095717: [[('Current use by method type', 'Traditional method', '=', 0),
+  ('Desire for more children', 'Sterilized (respondent or partner)', '=', 1)]]
+  
+  
+Ehtiopia
+
+
+Support: 1e-07, 0.003981071705534978: [['Region is not "Dire Dawa" and',
+  'Region is not "Harari" and',
+  'Time since last menstrual period > 207.5 and',
+  'Current use by method type is not "Traditional method" and',
+  'Recent sexual activity is not "Never had sex"'],
+ ['Region is not "Addis Adaba" and',
+  'Time since last menstrual period <= 207.5 and',
+  'Current use by method type is not "Traditional method" and',
+  'Recent sexual activity is not "Never had sex"'],
+ ['Region is not "Addis Adaba" and',
+  'Region is not "Harari" and',
+  'Wealth index combined <= 3.5 and',
+  'Current use by method type is not "Traditional method" and',
+  'Recent sexual activity is not "Never had sex"'],
+ ['Wealth index combined > 3.5 and',
+  'Current use by method type is not "Traditional method" and',
+  'Recent sexual activity is not "Never had sex"']]
+  
+CLR: 0.8628026412325752 1e-07, 0.0006812920690579615: [['Region is not "Gambela" and',
+  'Literacy is not "No card with required language" and',
+  'Time since last menstrual period > 410.0 and',
+  'Knowledge of ovulatory cycle is not "Middle of the cycle" and',
+  'Visited by fieldworker in last 12 months is not "Yes" and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Number of household members (listed) > 4.5 and',
+  'Frequency of reading newspaper or magazine > 0.5 and',
+  'Knowledge of ovulatory cycle is not "Middle of the cycle"'],
+ ['Region is  "Gambela" and',
+  'Highest educational level > 0.5 and',
+  'Literacy is not "No card with required language" and',
+  'Visited by fieldworker in last 12 months is not "Yes" and',
+  'Desire for more children is not "Sterilized (respondent or partner)"'],
+ ['Region is not "Gambela" and',
+  'Highest educational level > 0.5 and',
+  'Number of household members (listed) > 4.5 and',
+  'Frequency of reading newspaper or magazine <= 0.5 and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Number of household members (listed) <= 4.5 and',
+  'Frequency of reading newspaper or magazine > 0.5 and',
+  'Knowledge of ovulatory cycle is  "Middle of the cycle" and',
+  'Visited by fieldworker in last 12 months is not "Yes"'],
+ ['Region is not "Gambela" and',
+  'Highest educational level <= 0.5 and',
+  'Number of household members (listed) <= 4.5 and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Frequency of reading newspaper or magazine > 0.5 and',
+  'Visited by fieldworker in last 12 months is  "Yes" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Highest educational level <= 0.5 and',
+  'Number of household members (listed) > 4.5 and',
+  'Literacy is not "No card with required language" and',
+  'Time since last menstrual period <= 699.0 and',
+  'Visited by fieldworker in last 12 months is not "Yes" and',
+  'Age at first sex <= 32.5 and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Region is not "Gambela" and',
+  'Number of household members (listed) <= 4.5 and',
+  'Literacy is not "No card with required language" and',
+  'Frequency of reading newspaper or magazine <= 0.5 and',
+  'Knowledge of ovulatory cycle is not "Middle of the cycle" and',
+  'Visited by fieldworker in last 12 months is not "Yes" and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Highest educational level > 0.5 and',
+  'Frequency of reading newspaper or magazine <= 0.5 and',
+  'Time since last menstrual period <= 699.0 and',
+  'Knowledge of ovulatory cycle is  "Middle of the cycle" and',
+  'Desire for more children is not "Sterilized (respondent or partner)"'],
+ ['Region is not "Gambela" and',
+  'Literacy is not "No card with required language" and',
+  'Frequency of reading newspaper or magazine <= 0.5 and',
+  'Time since last menstrual period <= 699.0 and',
+  'Visited by fieldworker in last 12 months is  "Yes" and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"']]
+  
+[['Region is not "Gambela" and',
+  'Literacy is not "No card with required language" and',
+  'Frequency of reading newspaper or magazine <= 0.5 and',
+  'Time since last menstrual period <= 699.0 and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Region is not "Gambela" and',
+  'Literacy is not "No card with required language" and',
+  'Frequency of reading newspaper or magazine <= 0.5 and',
+  'Desire for more children is not "Sterilized (respondent or partner)" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Highest educational level > 0.5 and',
+  'Literacy is not "No card with required language" and',
+  'Time since last menstrual period <= 699.0 and',
+  'Knowledge of ovulatory cycle is  "Middle of the cycle" and',
+  'Age at first sex <= 32.5 and',
+  'Desire for more children is not "Sterilized (respondent or partner)"'],
+ ['Frequency of reading newspaper or magazine > 0.5 and',
+  'Visited by fieldworker in last 12 months is  "Yes" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Number of household members (listed) > 4.5 and',
+  'Frequency of reading newspaper or magazine > 0.5 and',
+  'Knowledge of ovulatory cycle is not "Middle of the cycle"']]
+  
+KNN:0.9046221570066031, 1e-07, 0.003981071705534978: [["Respondent's current age > 26.5 and",
+  'Unmet need is not "Using for limiting"'],
+ ["Respondent's current age > 26.5 and", 'Region is not "Gambela"'],
+ ["Respondent's current age <= 21.5 and",
+  'Heard family planning on newspaper/magazine last few months not  and',
+  'Unmet need is not "Using for limiting"'],
+ ['Education in single years > 8.5 and',
+  'Cohabitation duration (grouped) is not "Never married"'],
+ ['Region is not "Gambela" and', 'Unmet need is  "Using for limiting"'],
+ ['Region is not "Gambela" and',
+  'Education in single years <= 8.5 and',
+  'Knowledge of ovulatory cycle is not "Don\'t know" and',
+  'Age at first sex <= 23.5']]
+  
+  
+Ptree:0.9570799706529713: [[('Region', 'Addis Adaba', '=', 0),
+  ('Region', 'Dire Dawa', '=', 0),
+  ('Current use by method type', 'Traditional method', '=', 0),
+  ('Region', 'Harari', '=', 0),
+  ('Desire for more children', 'Sterilized (respondent or partner)', '=', 0),
+  ('Time since last menstrual period', '', '>',  ),
+  ('Recent sexual activity', 'Active in last 4 weeks', '=', 1),
+  ('Region', 'Tigray', '=', 0),
+  ('Ideal number of children', '', '>', 97.0)],
+  
+ [('Region', 'Addis Adaba', '=', 0),
+  ('Region', 'Dire Dawa', '=', 0),
+  ('Current use by method type', 'Traditional method', '=', 0),
+  ('Region', 'Harari', '=', 0),
+  ('Desire for more children', 'Sterilized (respondent or partner)', '=', 1)]
+  
+  ,
+ [('Region', 'Addis Adaba', '=', 0),
+  ('Region', 'Dire Dawa', '=', 0),
+  ('Current use by method type', 'Traditional method', '=', 1)],
+  
+ [('Region', 'Addis Adaba', '=', 1),
+  ('Current use by method type', 'Traditional method', '=', 1)]]
+  
+
+Kenya: 
+Marginal: (0.009426609394572995, -0.015383280069001574, 0.03578345301165446)
+ATE: (0.006886779150869937, -0.021099595619552488, 0.04019059307015329)
+Placebo: -0.0001642181166170932
+
+CLR:
+Marginal: (-0.00515071155189957, -0.03506344766925691, 0.023443758674433657)
+ATE: (-0.00255304152818759, -0.035472011746914334, 0.0259425005915482)
+Placebo: -0.0007807229329666128
+
+KNN:
+Marginal: (-0.01318096561796677, -0.04266213355525628, 0.015631011697465218)
+ATE: (-0.015780767094079537, -0.045555151486491696, 0.013805162270938993)
+Placebo: -0.0005462152505996604
+
+Ptree:
+Marginal: (0.002088963413226539, -0.02246926033389281, 0.028472577325489093)
+ATE: (0.007593076202824484, -0.022376734197585367, 0.03917537557040022)
+Placebo: -0.0010011176083112607
+
+Ethiopia:
+Marginal: (-0.011941878425317274, -0.0383237493124197, 0.014130715589222348)
+ATE: (-0.009706362486949265, -0.03887557485195315, 0.017208849058049487)
+Placebo: -0.00031661798899859574
+
+CLR:
+Marginal: (-0.012327762657641843, -0.04277742764253745, 0.016482580728691094)
+ATE: (-0.011976787894606879, -0.04411274859848317, 0.017367218703592646)
+Placebo: -0.00028522251451859983
+
+KNN:
+Marginal: (-0.0086249414940553, -0.03661347398908209, 0.01879554862682476)
+ATE: (-0.005499672472683971, -0.03600290192426199, 0.022712436323141016)
+Placebo: 0.0003645538793506078
+
+Ptree:
+Marginal: (-0.009420288837474533, -0.03752256195232095, 0.01647737058835706)
+ATE: (-0.007567071544660303, -0.03658464567893531, 0.018926807571294748)
+Placebo: -0.00019163782655557998

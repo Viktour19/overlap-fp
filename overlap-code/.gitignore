@@ -1,6 +1,0 @@
-*.pyc
-exps/supp-synthetic/logs/*.log
-exps/supp-synthetic/results/*
-*__pycache__*
-*.ipynb_checkpoints*
-
