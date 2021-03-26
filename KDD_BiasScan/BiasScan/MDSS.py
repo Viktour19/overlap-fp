@@ -7,22 +7,32 @@ import time
 
 from BiasScan.util.generator import *
 from BiasScan.optim.bisection_bias import *
-from BiasScan.solver.bisection_bias import *
 
+from BiasScan.solver.bisection_bias import *
 from BiasScan.solver.bisection_bj import *
+
+from BiasScan.util.contiguous_feature import get_contiguous_set_indices
+from pandas.api.types import CategoricalDtype
 
 
 # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
+class ContiguousSubset:
+    def __init__(self, observed_sum, probs, penalty, names):
+        self.observed_sum = observed_sum
+        self.probs  = probs
+        self.penalty = penalty
+        self.feature_values = names
 
 class MDSS(object):
-    def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable, compute_qs: Callable, score: Callable, alpha: float= None):
+    def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable, compute_qs: Callable, score: Callable, alpha: float= None, missing_label = 'missing'):
         self.optim_q_mle = optim_q_mle
         self.solver_q_min = solver_q_min
         self.solver_q_max = solver_q_max
         self.compute_qs = compute_qs
         self.score = score
         self.alpha = alpha
+        self.missing_label = missing_label
     
 
     def get_aggregates(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
@@ -168,6 +178,111 @@ class MDSS(object):
 
         return [best_names, best_score]
 
+    def choose_connected_aggregates(self, aggregates: dict, thresholds: list, penalty: float, all_observed_sum: float, all_probs: list, direction: str='positive', attribute_to_scan = None):
+
+        missing_label = self.missing_label
+        no_missing_label = '~' + missing_label
+
+        contiguous_set_indices = get_contiguous_set_indices(attribute_to_scan)
+        all_feature_values = attribute_to_scan
+
+        best_names = []
+        best_score = -1e10
+        
+        
+        for contiguous_subset in contiguous_set_indices:
+            observed_sum = 0.0
+            probs = []
+            curr_penalty = penalty
+            #make a dictionary of subsets with and without missing.
+            
+            contiguous_subset_dict = {}
+
+            contiguous_subset_dict[missing_label] = ContiguousSubset(observed_sum, probs, penalty, '')
+            contiguous_subset_dict[no_missing_label] = ContiguousSubset(observed_sum, probs, penalty, '')
+            
+            for feature_value_index in contiguous_subset:
+                feature_value = all_feature_values[feature_value_index]
+                
+                if feature_value in aggregates.keys():
+                    
+                    observed_sum += aggregates[feature_value]['observed_sum']
+                    probs = probs + aggregates[feature_value]['probs'].tolist()
+            
+            contiguous_subset_dict[no_missing_label].observed_sum = observed_sum
+            contiguous_subset_dict[no_missing_label].probs = probs
+            contiguous_subset_dict[no_missing_label].feature_values = [all_feature_values[i] for i in contiguous_subset]
+
+            # check if we will include Missing Value or not.
+            
+            if missing_label in aggregates.keys():
+                #have score of two subsets to be checked
+
+                curr_penalty= penalty * 2
+                observed_sum += aggregates[missing_label]['observed_sum']
+                probs = probs + aggregates[missing_label]['probs'].tolist()
+                
+                contiguous_subset_dict[missing_label].observed_sum = observed_sum
+                contiguous_subset_dict[missing_label].probs = probs
+                contiguous_subset_dict[missing_label].feature_values = [all_feature_values[i] for i in contiguous_subset]
+
+                
+                contiguous_subset_dict[missing_label].feature_values.append(missing_label)
+                contiguous_subset_dict[missing_label].penalty = curr_penalty
+                
+            else:
+                curr_penalty = penalty * 2
+                contiguous_subset_dict[missing_label].feature_values = [all_feature_values[i] for i in contiguous_subset]
+                contiguous_subset_dict[missing_label].feature_values.append(missing_label)
+                contiguous_subset_dict[missing_label].observed_sum = observed_sum
+                contiguous_subset_dict[missing_label].probs = probs
+                contiguous_subset_dict[missing_label].penalty = curr_penalty
+                
+                            
+            for key in contiguous_subset_dict.keys():
+                #calculate score for both missing and not missing case
+                #need to convert list of probs into an array.
+
+                observed_sum = contiguous_subset_dict[key].observed_sum
+                probs = np.array(contiguous_subset_dict[key].probs)
+                current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
+                
+                current_score = self.score(observed_sum=observed_sum, probs=probs, penalty=contiguous_subset_dict[key].penalty, q=current_q_mle, alpha=self.alpha)
+
+                if current_score > best_score:
+                    best_names = contiguous_subset_dict[key].feature_values
+                    best_score = current_score
+ 
+        #cover just the missing case:
+        observed_sum = 0.0
+        probs = []
+        curr_penalty = penalty
+
+        if missing_label in aggregates.keys():
+            observed_sum += aggregates[missing_label]['observed_sum']
+            probs = probs + aggregates[missing_label]['probs'].tolist()
+
+        probs = np.array(probs)
+
+        current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
+        current_score = self.score(observed_sum=observed_sum, probs=probs, penalty=curr_penalty, q=current_q_mle, alpha=self.alpha)
+        
+        if current_score >= best_score:
+            best_names = [missing_label]
+            best_score = current_score
+
+    
+        #cover the all case:
+        current_q_mle = self.optim_q_mle(all_observed_sum, all_probs, direction=direction, alpha=self.alpha)
+        current_score = self.score(observed_sum=all_observed_sum, probs=all_probs, penalty=0, q=current_q_mle, alpha=self.alpha)
+
+        if current_score >= best_score:
+            best_names = []
+            best_score = current_score
+  
+        return [best_names, best_score]
+     
+
     # score_current subset
     def score_current_subset(self, coordinates: pd.DataFrame, probs: pd.Series, outcomes: pd.Series,
                              penalty: float, current_subset: dict, direction='positive'):
@@ -201,14 +316,23 @@ class MDSS(object):
 
         # total_penalty = penalty * sum of list lengths in current_subset
         total_penalty = 0
-        for i in current_subset.values():
-            total_penalty += len(i)
+
+        # need to change to cater to fact that contiguous value count penalty once
+        for key, values in current_subset.items():
+            if coordinates[key].dtype.str == CategoricalDtype.str:
+                # no need to cover the ALL case since the feature with all values included will not be key
+                if self.missing_label in values and len(values) == 1:
+                    total_penalty += 1
+                elif self.missing_label in values:
+                    total_penalty += 2
+                else:
+                    total_penalty += 1
+            else:
+                total_penalty += len(values)
+
         total_penalty *= penalty
 
-        # Compute and return the penalized score
-        # logging.warning(str(current_q_mle) + " " + str(self.alpha) + " " + str(current_q_mle/self.alpha) + " " + 
-        #                 str(1-current_q_mle) + " " + str(1-self.alpha) + " " + str((1 - current_q_mle)/(1 - self.alpha)) + " " +
-        #                  str(observed_sum))        
+        # Compute and return the penalized score    
         penalized_score = self.score(observed_sum=observed_sum, probs=probs, penalty=total_penalty, q=current_q_mle, alpha=self.alpha)
         return penalized_score
 
@@ -278,14 +402,24 @@ class MDSS(object):
                     direction=direction
                 )
 
-                temp_names, temp_score = self.choose_aggregates(
-                    aggregates=aggregates,
-                    thresholds=thresholds,
-                    penalty=penalty,
-                    all_observed_sum=all_observed_sum,
-                    all_probs=all_probs,
-                    direction=direction
-                )
+                if coordinates[attribute_to_scan].dtype.str == CategoricalDtype.str:                    
+                    temp_names, temp_score = self.choose_connected_aggregates(
+                        aggregates=aggregates,
+                        thresholds=thresholds,
+                        penalty=penalty,
+                        all_observed_sum=all_observed_sum,
+                        all_probs=all_probs,
+                        attribute_to_scan = coordinates[attribute_to_scan]              
+                    )
+                else:
+                    temp_names, temp_score = self.choose_aggregates(
+                        aggregates=aggregates,
+                        thresholds=thresholds,
+                        penalty=penalty,
+                        all_observed_sum=all_observed_sum,
+                        all_probs=all_probs,
+                        direction=direction
+                    )
 
                 temp_subset = current_subset.copy()
                 # if temp_names is not empty (or null)
@@ -309,9 +443,9 @@ class MDSS(object):
                 if temp_score > current_score + 1E-6:
                     flags.fill(0)
 
-                # sanity check to make sure score has not decreased
-                assert temp_score >= current_score - 1E-6, \
-                    "WARNING SCORE HAS DECREASED from %.3f to %.3f" % (current_score, temp_score)
+                # TODO: confirm with Skyler: sanity check to make sure score has not decreased
+                # assert temp_score >= current_score - 1E-6, \
+                #     "WARNING SCORE HAS DECREASED from %.3f to %.3f" % (current_score, temp_score)
 
                 flags[attribute_number_to_scan] = 1
                 current_subset = temp_subset
@@ -387,20 +521,30 @@ class MDSS(object):
 
 if __name__ == "__main__":
     # prepare data
-    Data1 = pd.read_csv("dataset/COMPAS.csv")
+    Data1 = pd.read_csv("datasets/german_scan.csv")
 
-    Data2_outcomes = Data1['ReoffendedWithinTwoYears']
+    for col in Data1.columns:
+        if 'bin' in col:
+            s_idx = np.argsort([float(x.split('-')[0]) for x in Data1[col].unique()])
+            v_sorted = Data1[col].unique()[s_idx]
+            Data1[col] = pd.Categorical(Data1[col].values, categories=v_sorted, ordered=True)
 
-    Data2_treatments = Data1.copy()
-    del Data2_treatments['ReoffendedWithinTwoYears']
+    Data2_outcomes = Data1['observed']
+    Data2_probs = Data1['expectation']
 
-    probability_mapping = Data1.groupby('COMPASPredictedDecileScore').mean()['ReoffendedWithinTwoYears'].to_dict()
-    Data2_probs = Data1['COMPASPredictedDecileScore'].map(probability_mapping)
-    Data2_probs.name = "prob"
+    # Data2_treatments = Data1.copy()
+    # del Data2_treatments['ReoffendedWithinTwoYears']
+
+    # probability_mapping = Data1.groupby('COMPASPredictedDecileScore').mean()['ReoffendedWithinTwoYears'].to_dict()
+    # Data2_probs = Data1['COMPASPredictedDecileScore'].map(probability_mapping)
+    # Data2_probs.name = "prob"
 
     # prepare bias scan
-    bias_scan_penalty = 0.0
+    bias_scan_penalty = 1e-17
     bias_scan_num_iters = 10
+    
+    from BiasScan.solver.bisection_bias import bisection_q_min, bisection_q_max
+    from BiasScan.score_bias import compute_qs_bias, score_bias
 
     scanner = MDSS(
         optim_q_mle=bisection_q_mle,
@@ -413,12 +557,12 @@ if __name__ == "__main__":
     start = time.time()
 
     [best_subset, best_score] = scanner.run_bias_scan(
-        coordinates=Data2_treatments,
+        coordinates=Data1[Data1.columns[:-2]],
         outcomes=Data2_outcomes,
         probs=Data2_probs,
         penalty=bias_scan_penalty,
         num_iters=bias_scan_num_iters,
-        direction='positive',
+        direction='negative',
         num_threads=1, # you can set it to 1 to see the difference
         verbose=False
     )
