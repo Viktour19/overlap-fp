@@ -1,4 +1,4 @@
-from BiasScan.score_bias import *
+from BiasScan.score_poisson import *
 
 
 def bisection_q_min(observed_sum: float, probs: np.array, penalty: float, q_mle: float, **kwargs):
@@ -19,7 +19,7 @@ def bisection_q_min(observed_sum: float, probs: np.array, penalty: float, q_mle:
     while np.abs(q_temp_max - q_temp_min) > 1e-6:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
-        if np.sign(score_bias(observed_sum, probs, penalty, q_temp_mid)) > 0:
+        if np.sign(score_poisson(observed_sum, probs, penalty, q_temp_mid)) > 0:
             q_temp_max = q_temp_max - (q_temp_max - q_temp_min) / 2
         else:
             q_temp_min = q_temp_min + (q_temp_max - q_temp_min) / 2
@@ -45,7 +45,7 @@ def bisection_q_max(observed_sum: float, probs: np.array, penalty: float, q_mle:
     while np.abs(q_temp_max - q_temp_min) > 1e-6:
         q_temp_mid = (q_temp_min + q_temp_max) / 2
 
-        if np.sign(score_bias(observed_sum, probs, penalty, q_temp_mid)) > 0:
+        if np.sign(score_poisson(observed_sum, probs, penalty, q_temp_mid)) > 0:
             q_temp_min = q_temp_min + (q_temp_max - q_temp_min) / 2
         else:
             q_temp_max = q_temp_max - (q_temp_max - q_temp_min) / 2
