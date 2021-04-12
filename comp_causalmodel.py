@@ -43,17 +43,18 @@ def weighted_auc_scorer(clf, X, a_true):
     return 1 - abs(score - 0.5)
 
 
-def model(data_path = folder + 'data/fp_select.csv', encode=True):
+def model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid'):
     
     X_df, a, y = get_data(data_path, encode=encode)
+    
     
     strartify_by = (a*2) + y
     X_train, X_test, a_train, a_test, y_train, y_test = train_test_split(X_df, a, y, train_size=0.7, test_size=0.3, shuffle=True, \
                                                                          random_state=1, stratify=strartify_by)
     
     base_estimator = LogisticRegression(penalty="l2", max_iter=2000, class_weight="balanced", random_state=2, solver='lbfgs')
-    learner = CalibratedClassifierCV(base_estimator=base_estimator, cv=3, method='sigmoid')
-    param_grid = {'base_estimator__C': np.logspace(-5, 0, 20)}
+    learner = CalibratedClassifierCV(base_estimator=base_estimator, cv=3, method=method)
+    param_grid = {'base_estimator__C': np.logspace(-2, 0, 20)}
     search = GridSearchCV(learner, param_grid, cv=5, scoring=weighted_auc_scorer)
 
     ipw = IPW(make_pipeline(StandardScaler(), search), use_stabilized=True)
@@ -74,7 +75,7 @@ def causal_eval(model, X_test, a_test, y_test):
     evaluations = evaluator.evaluate_simple(X_test.astype(float), a_test, y_test, plots=plots)
 
     fig = evaluations.plots['covariate_balance_slope'].get_figure()
-    fig.set_size_inches(7, 7) 
+    fig.set_size_inches(8, 8) 
     
     timestamp = str(int(time.time()))
     plt.tight_layout()
@@ -82,7 +83,7 @@ def causal_eval(model, X_test, a_test, y_test):
     
     return evaluations
 
-def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 2000, title="distribution of marginal diff"):
+def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 1000, title="distribution of marginal diff", effect_type='or'):
     
     X_df, a, y = get_data(data_path)
     
@@ -98,14 +99,14 @@ def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 
         y_r = y_r.reset_index(drop=True)
         
         outcome = moe.estimate_population_outcome(X_r, a_r, y_r)
-        outcome_diff = outcome[1] - outcome[0]
-        
-        outcomes.append(outcome_diff)
+        outcomes.append(moe.estimate_effect(outcome[1], outcome[0], effect_types=effect_type)[effect_type])
         
     plt.hist(outcomes)
     plt.title(title)
     
     timestamp = str(int(time.time()))
+    plt.tight_layout()
+    
     plt.savefig(folder + 'figures/outcomes' + timestamp + '.pdf')
 
     median = np.median(outcomes)
@@ -114,7 +115,7 @@ def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 
     
     return median, lower, upper
     
-def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 2000, title="distribution of ATE"):
+def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 1000, title="distribution of ATE", effect_type='or'):
 
     effects = []
     for i in tqdm(range(n_bootstrap)):
@@ -125,13 +126,14 @@ def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 2000, title="di
         y_r = y_r.reset_index(drop=True)
 
         potential_outcomes = ipw.estimate_population_outcome(X_r, a_r, y_r)
-        causal_effect = ipw.estimate_effect(potential_outcomes[1], potential_outcomes[0])['diff']
+        causal_effect = ipw.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types=effect_type)[effect_type]
         effects.append(causal_effect)
         
     plt.hist(effects)
     plt.title(title)
     
     timestamp = str(int(time.time()))
+    plt.tight_layout()
     plt.savefig(folder + 'figures/effects' + timestamp + '.pdf')
 
     median = np.median(effects)
@@ -156,12 +158,13 @@ def placebo_effects(ipw, X_test, a_test, y_test, n_bootstrap=1000, title="distri
 
         ipw.fit(X_boots, random_a)
         potential_outcomes = ipw.estimate_population_outcome(X_boots, random_a, y_boots)
-        placebo_effects.append(ipw.estimate_effect(potential_outcomes[1], potential_outcomes[0])['diff'])
+        placebo_effects.append(ipw.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types="or")['or'])
     
     plt.hist(placebo_effects)
     plt.title(title)
     
     timestamp = str(int(time.time()))
+    plt.tight_layout()
     plt.savefig(folder + 'figures/placeboeffects' + timestamp + '.pdf')
     
     return np.mean(placebo_effects)

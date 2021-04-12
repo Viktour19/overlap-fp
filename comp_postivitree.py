@@ -10,8 +10,8 @@ import time
 DATA_PATH = folder + 'data/fp_select.csv'
 
 
-def transcribe(violating_leaves):
-    var_encoding = get_varencoding()
+def transcribe(violating_leaves, var_encoding=None):
+    var_encoding = get_varencoding(path=var_encoding)
     rules = []
     
     for leaf in violating_leaves:
@@ -27,6 +27,7 @@ def transcribe(violating_leaves):
             if '_' in violation[0]:
                 
                 v, l = violation[0].split('_')
+#                 print(v, l, var_encoding[v], get_lbl(v))
                 var = get_lbl(v)
                 level = var_encoding[v][l]
                 
@@ -48,11 +49,11 @@ def transcribe(violating_leaves):
     return rules
         
         
-def learn_rules(data_path=DATA_PATH):
+def learn_rules(data_path=DATA_PATH, var_encoding=None, relative=False):
     
     X_df, a, y = get_data(data_path)
     
-    ptree = PositiviTree(X_df, a, violation_cutoff=0.1, consistency_cutoff=0.6, n_consistency_tests=200, relative_violations=False, \
+    ptree = PositiviTree(X_df, a, violation_cutoff=0.1, consistency_cutoff=0.6, n_consistency_tests=200, relative_violations=relative, \
                          dtc_kws={"criterion": "entropy"}, rfc_kws={"max_features": "auto"})
 
     violating_samples = ptree._get_violating_samples_mask()
@@ -60,10 +61,12 @@ def learn_rules(data_path=DATA_PATH):
 
     leaves = ptree.export_leaves(extract_rules_kws={"clause_joiner": None})
     violating_leaves = [leaf for leaf in leaves if leaf['is_violating']]
+    violating_consistencies = [leaf['consistency'] for leaf in leaves if leaf['is_violating']]
+    
 
-    transcript = transcribe(violating_leaves)
+    transcript = transcribe(violating_leaves, var_encoding=var_encoding)
     
     timestamp = str(int(time.time()))
     fig.savefig(folder + 'figures/positivitree' + timestamp + '.pdf')
     
-    return scores, X_df[violating_samples].index, transcript
+    return scores, X_df[violating_samples].index, transcript, leaves

@@ -17,6 +17,7 @@ def select_data(data_path=folder + 'data/KE_2014_Preprocessed.csv'):
     vvars = list(encoding[encoding['selected'] == 1].var_name)
     data = data[vvars + ['outcome', 'treatment']]
     
+    
     timestamp = str(int(time.time()))
     data.to_csv(folder + 'data/fp_select' + timestamp + '.csv', index=False)
     return data
@@ -41,7 +42,7 @@ def get_data(data_path=folder + 'data/fp_select.csv', cols=None, encoding_path=f
     y = data['outcome'] * 1
     a = data['treatment'] * 1
     
-    if not encode:
+    if encode is False:
         return X, a, y
 
     # Select and Encode ordinal features
@@ -79,9 +80,9 @@ def get_data(data_path=folder + 'data/fp_select.csv', cols=None, encoding_path=f
     return X_df, a, y
 
 
-def get_varencoding():
+def get_varencoding(path = folder + 'data/varencoding.txt'):
     
-    with open(folder + 'data/varencoding.txt', 'r') as f: 
+    with open(path, 'r') as f: 
         entire_doc = f.read()
 
     vencoding = entire_doc.split(';')

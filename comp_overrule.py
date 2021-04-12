@@ -16,6 +16,9 @@ import numpy as np
 from comp_preprocessing import get_data
 from utils import read_model, rule_str
 
+from multiprocessing.pool import Pool
+from multiprocessing import cpu_count
+
 import time 
 
 N_REF_MULT_s=0.3
@@ -43,7 +46,7 @@ def overrulefit(X_df_sample, a_sample, LAMBDA0_s=None, LAMBDA1_s=None, model=Non
     
     if RS_s is None:
         RS_s = BCSRulesetEstimator(n_ref_multiplier=N_REF_MULT_s, alpha=ALPHA_s, lambda0=LAMBDA0_s, lambda1=LAMBDA1_s, B=B, CNF=CNF, 
-                                   cat_cols=CAT_COLS, seed=SEED, K=K, D=D, binarizer='default')
+                                   cat_cols=CAT_COLS, seed=SEED, K=K, D=D, binarizer='tree')
         RS_s.fit(X_df_sample, a_sample)
     
     if only_support:
@@ -56,15 +59,23 @@ def overrulefit(X_df_sample, a_sample, LAMBDA0_s=None, LAMBDA1_s=None, model=Non
                                cat_cols=CAT_COLS, seed=SEED, binarizer='default')
 
     
-    M = OverRule2Stage(O, RS_o, RS_s, refit_s=False)
-    M.fit(X_df_sample, a_sample)
+    try:
+        M = OverRule2Stage(O, RS_o, RS_s, refit_s=False)
+        M.fit(X_df_sample, a_sample)
+
+        TPR = RS_s.predict(X_df_sample).mean()
+        FPR = RS_s.relative_volume
+        auc = 1/2 -  (FPR)/2 + TPR/2
+        score_base = M.score_vs_base(X_df_sample)
+
+        return M, RS_s, RS_o, auc, score_base
     
-    TPR = RS_s.predict(X_df_sample).mean()
-    FPR = RS_s.relative_volume
-    auc = 1/2 -  (FPR)/2 + TPR/2
-    score_base = M.score_vs_base(X_df_sample)
-    
-    return M, RS_s, RS_o, auc, score_base
+    except AssertionError as e:
+        
+        TPR = RS_s.predict(X_df_sample).mean()
+        FPR = RS_s.relative_volume
+        auc = 1/2 -  (FPR)/2 + TPR/2
+        return None, RS_s, None, auc, None
 
                 
 def learn_srules(logspace=10, data_path = DATA_PATH):
@@ -75,20 +86,30 @@ def learn_srules(logspace=10, data_path = DATA_PATH):
     LAMBDA_1 = np.logspace(-7, -0.1, logspace)
     
     results = []
+    pool = Pool(processes=cpu_count() - 1)
     
     for lambda_0 in tqdm(LAMBDA_0):
         for lambda_1 in tqdm(LAMBDA_1):
-            M, RS_s, RS_o, auc, score_base = overrulefit(X_df, a, LAMBDA0_s=lambda_0, LAMBDA1_s=lambda_1, only_support=True)
-            results.append([RS_s.complexity(), None, auc, None, lambda_0, lambda_1])
-            
+            results.append(pool.apply_async(overrulefit, (X_df, a), \
+                                            {'LAMBDA0_s': lambda_0, 'LAMBDA1_s': lambda_1, 'only_support':True}))
+    
+    pool.close()
+    pool.join()
+    
+    results_data = [res.get() for res in results]
+    results = []
+    for M, RS_s, RS_o, auc, score_base in results_data:
+        results.append([RS_s.complexity(), None, auc, None, lambda_0, lambda_1])
+        
     return results
 
-def learn_s_orules(model_path, LAMBDA0_s, LAMBDA1_s, LAMBDA0_o, LAMBDA1_o, data_path = DATA_PATH, encode=True):
+
+def learn_s_orules(model_path, LAMBDA0_s, LAMBDA1_s, LAMBDA0_o, LAMBDA1_o, data_path = DATA_PATH, encode=True, only_support=False):
     
     model = read_model(model_path)
     X_df, a, y = get_data(data_path, encode=encode)
     
-    M, RS_s, RS_o, auc, score_base = overrulefit(X_df, a, LAMBDA0_s=LAMBDA0_s, LAMBDA1_s=LAMBDA1_s, LAMBDA0_o=LAMBDA0_o, LAMBDA1_o=LAMBDA1_o, model=model)
+    M, RS_s, RS_o, auc, score_base = overrulefit(X_df, a, LAMBDA0_s=LAMBDA0_s, LAMBDA1_s=LAMBDA1_s, LAMBDA0_o=LAMBDA0_o, LAMBDA1_o=LAMBDA1_o, model=model, only_support=only_support)
 
     return M, RS_s, RS_o, auc, score_base
 
@@ -117,6 +138,7 @@ def plt_cl_lit(results, rtype="support", title=None):
     axs.set_title(title)
     
     timestamp = str(int(time.time()))
+    plt.tight_layout()
     fig.savefig(folder + 'figures/' + rtype + 'clause' + timestamp + '.pdf')
     
     return axs
@@ -135,7 +157,9 @@ def get_sem_optim(results, rtype="support"):
         accuracy.append(result[2 +j])
         
     data = pd.DataFrame({'accuracy': accuracy}, index = complexities_c)
-    select_x = data[(data['accuracy'] >= (np.max(accuracy) - (4 * stats.sem(accuracy))))].index.min()    
+    select_x = data[(data['accuracy'] >= (np.max(accuracy) - (stats.sem(accuracy))))].index.min()
+#     select_x = data[(data['accuracy'] >= .90)].index.min()    
+    
     
     newmax = 0
     max_result = None
@@ -145,7 +169,7 @@ def get_sem_optim(results, rtype="support"):
             if rmax > newmax:
                 newmax = rmax
                 max_result = result
-                
+    print(np.max(accuracy))         
     return max_result
 
 def plt_sem(results, rtype="support"):

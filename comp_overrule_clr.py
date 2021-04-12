@@ -16,6 +16,9 @@ from utils import write_model
 from comp_preprocessing import get_data
 from comp_overrule import overrulefit
 
+from multiprocessing.pool import Pool
+from multiprocessing import cpu_count
+
 DATA_PATH = folder + 'data/fp_select.csv'
 
 def model(data_path = DATA_PATH, encode=True):
@@ -35,10 +38,14 @@ def model(data_path = DATA_PATH, encode=True):
     return clrmodel, X_df, a
 
 
-def learn_orules(LAMBDA0_s=0.1, LAMBDA1_s=0.1, logspace=10, data_path = DATA_PATH, encode=True):
+def learn_orules(LAMBDA0_s=0.1, LAMBDA1_s=0.1, logspace=10, data_path = DATA_PATH, encode=True, cmodel=None):
     
-    clrmodel, X_df, a = model(data_path, encode=encode)
-    write_model(clrmodel, 'clrmodel')
+    if cmodel is None:
+        clrmodel, X_df, a = model(data_path)
+        write_model(clrmodel, 'clrmodel')
+    else:
+        X_df, a, _ = get_data(data_path)
+        clrmodel = cmodel
     
     LAMBDA_0 = np.logspace(-7, -0.1, logspace)
     LAMBDA_1 = np.logspace(-7, -0.1, logspace)
@@ -46,10 +53,29 @@ def learn_orules(LAMBDA0_s=0.1, LAMBDA1_s=0.1, logspace=10, data_path = DATA_PAT
     RS_s = None
     results = []
     
+    pool = Pool(processes=cpu_count() - 1)
     for lambda_0 in tqdm(LAMBDA_0):
         for lambda_1 in tqdm(LAMBDA_1):
+            results.append(pool.apply_async(overrulefit, (X_df, a), \
+                                            {'LAMBDA0_s': LAMBDA0_s, 'LAMBDA1_s': LAMBDA1_s, \
+                                             'model':clrmodel, 'LAMBDA0_o': lambda_0, 'LAMBDA1_o': lambda_1, 'RS_s': RS_s}))
             
-            M, RS_s, RS_o, auc, score_base = overrulefit(X_df, a, LAMBDA0_s=LAMBDA0_s, LAMBDA1_s=LAMBDA1_s, model=clrmodel, LAMBDA0_o=lambda_0, LAMBDA1_o=lambda_1, RS_s = RS_s)
+            
+    pool.close()
+    pool.join()
+    results_data = []
+    for res in results:
+        try:
+            results_data.append(res.get())
+        except AssertionError as e:
+            continue
+    
+    results = []
+    
+    for M, RS_s, RS_o, auc, score_base in results_data:
+        if RS_o is None:
+            results.append([RS_s.complexity(), (0, 0), auc, score_base, lambda_0, lambda_1])
+        else:
             results.append([RS_s.complexity(), RS_o.complexity(), auc, score_base, lambda_0, lambda_1])
-            
+        
     return results

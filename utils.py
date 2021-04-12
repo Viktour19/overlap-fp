@@ -45,16 +45,22 @@ def rules_stats(r_rules, df, a):
         # Instances covered by rule
         d = {}
         d['rule'] = rules[i]
-        d['n_covered'] = float(Cs[i][:,I1].prod(0).sum())
-        d['p_covered'] = float(Cs[i][:,I1].prod(0).mean())
+        if len(rules[i]) == 0:
+            d['n_covered'] = len(df)
+            d['p_covered'] = 100.0
+            
+        else:
+            d['n_covered'] = float(Cs[i][:,I1].prod(0).sum())
+            d['p_covered'] = float(Cs[i][:,I1].prod(0).mean())
+        
         rule_stats.append(d)
     
     return rule_stats
 
 
-def transcribe(rule_stats):
+def transcribe(rule_stats, var_encoding_path=folder + 'data/varencoding.txt'):
     
-    var_encoding = get_varencoding()
+    var_encoding = get_varencoding(path=var_encoding_path)
     clauses = []
     
     for single_rset in rule_stats:
@@ -96,7 +102,6 @@ def write_model(model, name):
     obj = {"clf": model}
     
     with open('pickle/'+ name + '_' + timestamp + '.pickle', 'wb') as f_out:
-        
         pickle.dump(obj, f_out)
         f_out.close()
         

@@ -83,6 +83,8 @@ class OverlapBooleanRule(object):
         nO = len(O)
         nN = len(N)
         nU = len(U)
+        
+        #print(nO, nN, nU, len(y))
 
         # MKO: We should always have overlap samples, and either background or
         # non-overlap samples

@@ -87,6 +87,8 @@ class PositiviTree:
         dtc_kws["criterion"] = dtc_kws.get("criterion", DEFAULT_IMPURITY_CRITERION)
         # dtc_kws["min_samples_leaf"] = dtc_kws.get("min_samples_leaf", DEFAULT_MIN_SAMPLE_LEAF)
         dtc_kws["max_depth"] = dtc_kws.get("max_depth", self.X.shape[1] * 2)
+#         dtc_kws["max_depth"] = 7
+        
 
         dtc = DecisionTreeClassifier(**dtc_kws)
         dtc.fit(self.X, self.y)
@@ -203,6 +205,7 @@ class PositiviTree:
             node_consistency = consistency[self._get_samples_id_from_node(node_id, dtc)]
             if consistency_aggregator is not None:
                 node_consistency = consistency_aggregator(node_consistency)
+
             node["consistency"] = node_consistency
             node["children"] = [build_tree(sk_tree.children_left[node_id]),
                                 build_tree(sk_tree.children_right[node_id])]
