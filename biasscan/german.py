@@ -7,13 +7,13 @@ import numpy as np
 import json
 from tqdm import tqdm
 
-# from BiasScan.optim.bisection_bias import bisection_q_mle
-# from BiasScan.solver.bisection_bias import bisection_q_min, bisection_q_max
-# from BiasScan.score_bias import compute_qs_bias, score_bias
+from BiasScan.optim.bisection_bias import bisection_q_mle
+from BiasScan.solver.bisection_bias import bisection_q_min, bisection_q_max
+from BiasScan.score_bias import compute_qs_bias, score_bias
 
-from BiasScan.optim.bisection_poisson import bisection_q_mle
-from BiasScan.solver.bisection_poisson import bisection_q_min, bisection_q_max
-from BiasScan.score_poisson import compute_qs_poisson, score_poisson
+# from BiasScan.optim.bisection_poisson import bisection_q_mle
+# from BiasScan.solver.bisection_poisson import bisection_q_min, bisection_q_max
+# from BiasScan.score_poisson import compute_qs_poisson, score_poisson
 
 from BiasScan.MDSS import MDSS
 
@@ -24,8 +24,8 @@ scanner = MDSS(
     optim_q_mle=bisection_q_mle,
     solver_q_min=bisection_q_min,
     solver_q_max=bisection_q_max,
-    compute_qs=compute_qs_poisson,
-    score=score_poisson
+    compute_qs=compute_qs_bias,
+    score=score_bias
 )
 
 with open('datasets/GERMAN.slices.json') as fp:

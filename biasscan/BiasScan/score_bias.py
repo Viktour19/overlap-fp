@@ -74,18 +74,10 @@ def compute_qs_bias(optim_q_mle: Callable, solver_q_min: Callable, solver_q_max:
     :return: flag that indicates if qmin and qmax exist, qmle, qmin, qmax
     """
     # compute q_mle
-<<<<<<< HEAD:KDD_BiasScan/BiasScan/score_bias.py
     direction = None
     if 'direction' in kwargs:
         direction = kwargs['direction']
 
-=======
-    
-    direction = None
-    if 'direction' in kwargs:
-        direction = kwargs['direction']
-        
->>>>>>> master:biasscan/BiasScan/score_bias.py
     q_mle = optim_q_mle(observed_sum, probs, direction=direction)
 
     # if q_mle is greater the 0, then compute the other two roots
