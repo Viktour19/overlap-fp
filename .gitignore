@@ -1,4 +1,7 @@
 .ipynb_checkpoints/
+*.pyc
+*env*
+.DS_Store
 __pycache__/
 pickle/
 figures/
