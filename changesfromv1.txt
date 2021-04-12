@@ -1,0 +1,8 @@
+1. Using PCA of highly correlated features (r=0.8) clustered manually. The biclustering wasn't working well (unstable). Some PCA had low explained variance in the first component and didn't translate directly to the semantic meaning.
+2. Grid search for the the regularization param of the causal model (using a weighted-auc score)
+3. Estimating the placebo effect using 1000 bootstrap sample
+4. Grid search for the the regularization param of the log regression propensity model for Overrule
+5. Grid search for the the l of the KNN propensity model for Overrule and using a Calibrated knn
+6. Hyperparameter search of the lambda space for the support model
+7. Use well performing hyperparameter (not the best) but with low complexity to get the rules
+

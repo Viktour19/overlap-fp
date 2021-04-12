@@ -1,0 +1,110 @@
+KE:
+Marginal: (1.7641288254326533, 1.1248420997077697, 3.0121388983427413)
+ATE: (1.6033007123235299, 1.0073008037389761, 2.8003153429951286)
+Placebo: 1.0330569607577518
+
+ET:
+Marginal: (1.7217592980216612, 0.8693068242995888, 3.9770439833001094)
+ATE: (1.2086816975122954, 0.615585207393514, 2.787905975632892)
+Placebo: 1.0784923809828832
+
+NG:
+Marginal: (1.3912397660818716, 0.7136017542610265, 2.351860649731314)
+ATE: (1.1611034667302107, 0.5981828978138857, 1.994953187401825)
+Placebo: 1.0114778595261114
+
+KE:
+Support:
+0.8100392490051584
+[(3, 13), None, 0.7984560734006143, None, 5.843414133735175e-07, 0.003981071705534978]
+
+CLR:
+0.9675496688741723
+[(3, 13), (2, 2), 0.7984560734006143, 0.9675496688741723, 1e-07, 1e-07]
+
+[["Respondent's current age <= 33.5 and",
+  'Region is not "Central" and',
+  'Highest educational level <= 2.5 and',
+  'Education in single years <= 12.5 and',
+  'Unmet need is not "Using for spacing" and',
+  'Unmet need is  "No unmet need"'],
+ ['Highest educational level <= 2.5 and',
+  'Education in single years <= 12.5 and',
+  'Unmet need is not "No unmet need"'],
+ ['Region is not "Central" and',
+  'Highest educational level > 2.5 and',
+  'Recent sexual activity is  "Active in last 4 weeks" and',
+  'Unmet need is not "No unmet need"']]
+
+
+[['Pattern of use is not "Used since last birth"'],
+ ['Births in last five years <= 1.0']]
+ 
+0.9345688350983359%
+
+ET:
+Support:
+0.9451723268842926
+[(3, 17), None, 0.9451723268842926, None, 0.00011659144011798323, 0.003981071705534978]
+
+clr:
+0.9560117302052786
+[(3, 17), (6, 18), 0.9451723268842926, 0.9482804585443881, 5.843414133735175e-07, 1e-07]
+
+knn:
+0.9672847682119206
+[(3, 17), (3, 11), 0.9451723268842926, 0.9672847682119206, 0.1359356390878527, 0.0006812920690579615]
+
+
+[['Region is not "Dire Dawa" and',
+  'Type of place of residence is  "Urban" and',
+  'Type of place of residence is not "Rural" and',
+  'Total children ever born <= 8.5 and',
+  'Pattern of use is not "Used before last birth"'],
+ ['Region is not "Addis Adaba" and',
+  'Region is not "Dire Dawa" and',
+  'Region is not "Harari" and',
+  'Type of place of residence is not "Urban" and',
+  'Type of place of residence is  "Rural"'],
+ ['Region is not "Addis Adaba" and',
+  'Region is  "Dire Dawa" and',
+  'Region is not "Gambela" and',
+  'Region is not "Harari" and',
+  'Total children ever born <= 8.5 and',
+  'Pattern of use is not "Used before last birth" and',
+  'Exposure is not "Infecund, menopausal"']]
+  
+[['Unmet need is  "No unmet need"'],
+ ['Education in single years <= 12.0 and',
+  'Region is not "Harari" and',
+  'Visited health facility last 12 months is not "Yes" and',
+  'Exposure is not "Pregnant" and',
+  'Unmet need is not "Infecund, menopausal"'],
+ ['Knowledge of ovulatory cycle is not "During her period" and',
+  'Unmet need is  "Using for limiting" and',
+  'Time since last menstrual period <= 995.0'],
+ ['Education in single years <= 7.0 and',
+  'Region is not "Gambela" and',
+  'Unmet need is  "Using for spacing"'],
+ ['Highest educational level > 1.0 and',
+  'Frequency of reading newspaper or magazine <= 1.0 and',
+  'Currently/formerly/never in union is  "Currently in union/living with a man"'],
+ ['Frequency of listening to radio <= 0.0 and',
+  'Unmet need is not "Unmet need for spacing" and',
+  'Time since last menstrual period <= 338.0']]
+  
+0.8887420718816068%
+
+knn:
+[['Desire for more children is not "Wants within 2 years" and',
+  'Exposure is not "Infecund, menopausal" and',
+  'Unmet need is not "Unmet need for spacing"'],
+ ['Region is not "Gambela" and',
+  'Region is not "Addis Adaba" and',
+  'Literacy is not "No card with required language" and',
+  'Desire for more children is not "Wants, unsure timing" and',
+  'Births in past year <= 0.0'],
+ ['Region is not "Oromia" and',
+  'Literacy is not "No card with required language" and',
+  'Heard family planning on radio last few months not ']]
+0.9323467230443975%
