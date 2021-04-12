@@ -1,8 +1,0 @@
-Time: 1601019232.3948402
-Params: N_REF_MULT_s 1, N_REF_MULT_o 0, ALPHA_s 0.95, ALPHA_o 0.95, LAMBDA0 0.9, LAMBDA1 0.001, B 300, CNF False
-Number of reference samples: 536655
-Coverage of data points (TPR): 0.993, Requested >= 0.950
-Coverage of reference points: (FPR) 0.004
-Rules: ('  (not v532_4 ∧ not v626_6 ∧ not v128_14 ∧ not v127_96 ∧ not v161_95 ∧ not v116_42 ∧ [v206 <= 2.000] ∧ not v312_7)', '  ([v138 <= 1.000])\n∨ ([v133 <= 10.000])\n∨ (v605_5)')
-Complexity: (1, 8)
-AUC between rules and base estimator: 0.7018562335617978
