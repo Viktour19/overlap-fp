@@ -24,8 +24,8 @@ def get_contiguous_set_indices(contiguous_feature: pd.Series):
             cycle_complement.append(j)
 
             ## get bins with cycles
-            if j != l - 1:
-                cycle = set(range(l)).difference(cycle_complement)
-                contiguous_bins_index.append(list(cycle))
+            # if j != l - 1:
+            #     cycle = set(range(l)).difference(cycle_complement)
+            #     contiguous_bins_index.append(list(cycle))
     
     return contiguous_bins_index

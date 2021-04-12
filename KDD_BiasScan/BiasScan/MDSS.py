@@ -184,7 +184,7 @@ class MDSS(object):
         no_missing_label = '~' + missing_label
 
         contiguous_set_indices = get_contiguous_set_indices(attribute_to_scan)
-        all_feature_values = attribute_to_scan
+        all_feature_values = list(attribute_to_scan.cat.categories)
 
         best_names = []
         best_score = -1e10
