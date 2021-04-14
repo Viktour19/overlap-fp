@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from pandas.api.types import CategoricalDtype
 
 
 def get_entire_subset():
@@ -28,14 +29,44 @@ def get_random_subset(coordinates: pd.DataFrame, prob: float, min_elements: int 
         # get unique values of the current column
         temp = coordinates[column_name].unique()
 
-        # include each attribute value with probability = prob
-        mask_values = np.random.rand(len(temp)) < prob
+        # if the feature is a contiguous feature
+        if coordinates[column_name].dtype.str == CategoricalDtype.str:
+            value_probs = np.random.random(len(temp))
+            
+            # each value is randomly assigned probabilities and
+            # we set the starting feature value to be the value with the higest probability
+            # but also check that it is higher than the probability of selecting any feature value
+            
+            if np.max(value_probs) > prob:
+                start = np.argmax(value_probs)
+                indices = [start]
+                prob_tuple = (prob, 1-prob) #not sure if this should be prob or prob/2
 
-        if mask_values.sum() < len(temp):
-            # set values for the current column
-            subset_random_values[column_name] = temp[mask_values].tolist()
+                # set a probability mask to determine when to move up or down
+                down_mask = value_probs < prob_tuple[0]
+                up_mask = value_probs > prob_tuple[1]
 
-            # compute the remaining records
+                for down_bool, up_bool in zip(down_mask, up_mask):
+
+                    down = down_bool and indices[-1] > 0
+                    up = up_bool and indices[-1] < len(temp) - 1
+                    
+                    indices.append(indices[-1] - down + up)
+
+                subset_random_values[column_name] = temp[indices].tolist()
+
+            else:
+                subset_random_values[column_name] = []
+
+        else:
+            # include each attribute value with probability = prob
+            mask_values = np.random.rand(len(temp)) < prob
+            if mask_values.sum() < len(temp):
+                # set values for the current column
+                subset_random_values[column_name] = temp[mask_values].tolist()
+
+        # compute the remaining records
+        if subset_random_values:
             mask_subset = coordinates[subset_random_values.keys()].isin(subset_random_values).all(axis=1)
             remaining_records = len(coordinates.loc[mask_subset])
 

@@ -360,7 +360,7 @@ class MDSS(object):
         # initialize
         best_subset = {}
         best_score = -1e10
-
+        best_scores = []
         for i in range(num_iters):
             # flags indicates that the method has optimized over subsets for a given attribute.
             # The iteration ends when it cannot further increase score by optimizing over
@@ -475,7 +475,7 @@ class MDSS(object):
 
             elif verbose:
                     print("Current score of", current_score, "does not beat best score of", best_score)
-
+            best_scores.append(best_score)
         return best_subset, best_score
 
     def run_bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,

@@ -37,14 +37,15 @@ german = pd.read_csv('datasets/GERMAN.csv')
 
 german_scan['observed'] = 1 - german_scan['observed']
 
-for col in german_scan.columns:
-    if 'bin' in col:
-        s_idx = np.argsort([float(x.split('-')[0]) for x in german_scan[col].unique()])
-        v_sorted = german_scan[col].unique()[s_idx]
-        german_scan[col] = pd.Categorical(german_scan[col].values, categories=v_sorted, ordered=True)
+# for col in german_scan.columns:
+#     if 'bin' in col:
+#         s_idx = np.argsort([float(x.split('-')[0]) for x in german_scan[col].unique()])
+#         v_sorted = german_scan[col].unique()[s_idx]
+#         german_scan[col] = pd.Categorical(german_scan[col].values, categories=v_sorted, ordered=True)
 
 coordinates = german_scan[german_scan.columns[:-2]]
 penalty = 0.01
+feature_penalty = 0
 direction='positive'
 
 data = []
@@ -77,55 +78,92 @@ def get_rule_index(rules):
 rules  = sorted_data[0]['rule'].replace('tmp', 'german').strip().replace('german = ', '').split('\t')
 freeai_index = get_rule_index(rules)
 
-comb_list = list(combinations(coordinates.columns, 3))
+# comb_list = list(combinations(coordinates.columns, 3))
 
-max_score = -1
-subset = None
-for comb in tqdm(comb_list[:1]):
-    subset_ = scanner.run_bias_scan(coordinates=coordinates[list(comb)],
+# max_score = -1
+# subset = None
+# for comb in tqdm(comb_list[:1]):
+#     subset_ = scanner.run_bias_scan(coordinates=coordinates[list(comb)],
+#             outcomes=german_scan['observed'],
+#             probs=german_scan['expectation'],
+#             penalty=penalty,
+#             num_iters=10,
+#             num_threads=1,
+#             direction=direction)
+    
+#     if max_score < subset_[1]:
+#         subset = subset_
+#         max_score = subset_[1]
+
+
+f_lens = []
+f_scores = []
+
+s = 0; e = 2; n= 20
+
+for feature_penalty in tqdm(np.linspace(s, e, n)):
+    subset = scanner.run_bias_scan(coordinates=coordinates,
             outcomes=german_scan['observed'],
             probs=german_scan['expectation'],
             penalty=penalty,
-            num_iters=10,
-            num_threads=1,
-            direction=direction)
-    
-    if max_score < subset_[1]:
-        subset = subset_
-        max_score = subset_[1]
-
-dummy_subset = dict({'index': range(len(freeai_index))})
-coordinates = pd.DataFrame(dummy_subset, index=freeai_index)
-
-mdssscore = scanner.score_current_subset(coordinates=coordinates,
-            probs=german_scan.iloc[list(freeai_index)]['expectation'],
-            outcomes=german_scan.iloc[list(freeai_index)]['observed'],
-            penalty=penalty,
-            current_subset=dummy_subset,
+            feature_penalty=feature_penalty,
+            num_iters=50,
+            num_threads=10,
             direction=direction)
 
-print("Bias Scan HS Subset: \n", subset)
-print("FreeAI HR Slice: \n", rules)
+    # f_len = 0.0
+    # for k in subset[0].keys():
+    #     f_len += len(subset[0][k])
 
-mdss_index = set(german_scan[german_scan[subset[0].keys()].isin(subset[0]).all(axis=1)].index)
-subset_df = german_scan[german_scan[subset[0].keys()].isin(subset[0]).all(axis=1)]
+    # f_lens.append(f_len)
 
-print("Length of Bias Scan HS Subset: \n", len(subset_df))
-print("Mean Obs of Bias Scan HS Subset: \n", subset_df['observed'].mean())
+    f_lens.append(len(subset[0].keys()))
+    f_scores.append(subset[1])
 
-print("Length of FreeAI HR Slice: \n", len(freeai_index))
-prop_hr_slice = german_scan.iloc[list(freeai_index)]['observed'].mean()
-print("Mean Obs of FreeAI HR Slice: \n", prop_hr_slice)
-print("Bias Score of FreeAI HR Slice: \n", mdssscore)
+fig, (ax1, ax2) = plt.subplots(2)
+
+ax1.plot(np.linspace(s, e, n), f_lens)
+ax1.set(ylabel='no. of features in subset')
+
+ax2.plot(np.linspace(s, e, n), f_scores)
+ax2.set(xlabel='penalty (grid size:' + str(n) + ')')
+ax2.set(ylabel='S* score')
+
+fig.savefig('penalty_plot-04.pdf')
+
+# dummy_subset = dict({'index': range(len(freeai_index))})
+# coordinates = pd.DataFrame(dummy_subset, index=freeai_index)
+
+# mdssscore = scanner.score_current_subset(coordinates=coordinates,
+#             probs=german_scan.iloc[list(freeai_index)]['expectation'],
+#             outcomes=german_scan.iloc[list(freeai_index)]['observed'],
+#             penalty=penalty,
+#             feature_penalty=feature_penalty,
+#             current_subset=dummy_subset,
+#             direction=direction)
+
+# print("Bias Scan HS Subset: \n", subset)
+# print("FreeAI HR Slice: \n", rules)
+
+# mdss_index = set(german_scan[german_scan[subset[0].keys()].isin(subset[0]).all(axis=1)].index)
+# subset_df = german_scan[german_scan[subset[0].keys()].isin(subset[0]).all(axis=1)]
+
+# print("Length of Bias Scan HS Subset: \n", len(subset_df))
+# print("Mean Obs of Bias Scan HS Subset: \n", subset_df['observed'].mean())
+
+# print("Length of FreeAI HR Slice: \n", len(freeai_index))
+# prop_hr_slice = german_scan.iloc[list(freeai_index)]['observed'].mean()
+# print("Mean Obs of FreeAI HR Slice: \n", prop_hr_slice)
+# print("Bias Score of FreeAI HR Slice: \n", mdssscore)
 
 
-set1 = set(freeai_index)
-set2 = set(mdss_index)
+# set1 = set(freeai_index)
+# set2 = set(mdss_index)
 
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots()
-venn2([set1, set2], ('FreeAI', 'MDSS-BiasScan'), ax=ax)
-plt.show()
+# import matplotlib.pyplot as plt
+# fig, ax = plt.subplots()
+# venn2([set1, set2], ('FreeAI', 'MDSS-BiasScan'), ax=ax)
+# plt.show()
 
 # mdssscores = []
 # props = []
