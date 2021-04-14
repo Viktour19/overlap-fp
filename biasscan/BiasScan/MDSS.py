@@ -102,7 +102,7 @@ class MDSS(object):
         return [aggregates, sorted(thresholds), all_observed_sum, all_probs]
 
     def choose_aggregates(self, aggregates: dict, thresholds: list, penalty: float, all_observed_sum: float,
-                          all_probs: list, direction: str='positive'):
+                          all_probs: list, direction: str='positive', feature_penalty: float = 0.0):
         """
         Having previously computed the aggregates and the distinct q thresholds
         to consider in the get_aggregates function,we are now ready to choose the best
@@ -149,11 +149,11 @@ class MDSS(object):
             # Compute the score for the given subset at the MLE value of q.
             # Notice that each included value gets a penalty, so the total penalty
             # is multiplied by the number of included values.
-            current_score = self.score(observed_sum=observed_sum, probs=probs, penalty=penalty * len(names), q=current_q_mle, alpha=self.alpha)
+            current_interval_score = self.score(observed_sum=observed_sum, probs=probs, penalty=penalty * len(names), q=current_q_mle, alpha=self.alpha)
 
             # keep track of the best score, best q, and best subset of attribute values found so far
-            if current_score > best_score:
-                best_score = current_score
+            if current_interval_score > best_score:
+                best_score = current_interval_score
                 best_names = names
 
         # Now we also have to consider the case of including all attribute values,
@@ -172,13 +172,15 @@ class MDSS(object):
         # Keep track of the best score, best q, and best subset of attribute values found.
         # Note that if the best subset contains all values of the given attribute,
         # we return an empty list for best_names.
-        if current_score > best_score:
+        if current_score > best_score - feature_penalty:
             best_score = current_score
             best_names = []
 
         return [best_names, best_score]
 
-    def choose_connected_aggregates(self, aggregates: dict, thresholds: list, penalty: float, all_observed_sum: float, all_probs: list, direction: str='positive', attribute_to_scan = None):
+    
+    def choose_connected_aggregates(self, aggregates: dict, thresholds: list, penalty: float, all_observed_sum: float, all_probs: list, 
+                                    direction: str='positive', attribute_to_scan = None, feature_penalty: float = 0.0):
 
         missing_label = self.missing_label
         no_missing_label = '~' + missing_label
@@ -267,7 +269,7 @@ class MDSS(object):
         current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
         current_score = self.score(observed_sum=observed_sum, probs=probs, penalty=curr_penalty, q=current_q_mle, alpha=self.alpha)
         
-        if current_score >= best_score:
+        if current_score > best_score:
             best_names = [missing_label]
             best_score = current_score
 
@@ -276,7 +278,7 @@ class MDSS(object):
         current_q_mle = self.optim_q_mle(all_observed_sum, all_probs, direction=direction, alpha=self.alpha)
         current_score = self.score(observed_sum=all_observed_sum, probs=all_probs, penalty=0, q=current_q_mle, alpha=self.alpha)
 
-        if current_score >= best_score:
+        if current_score > best_score - feature_penalty:
             best_names = []
             best_score = current_score
   
@@ -285,7 +287,7 @@ class MDSS(object):
 
     # score_current subset
     def score_current_subset(self, coordinates: pd.DataFrame, probs: pd.Series, outcomes: pd.Series,
-                             penalty: float, current_subset: dict, direction='positive'):
+                             penalty: float, current_subset: dict, direction='positive', feature_penalty: float = 0.0):
         """
         Just scores the subset without performing ALTSS.
         We still need to determine the MLE value of q.
@@ -330,7 +332,9 @@ class MDSS(object):
             else:
                 total_penalty += len(values)
 
-        total_penalty *= penalty
+        total_penalty *= penalty         
+        extra_penalty = len(current_subset.keys()) * feature_penalty
+        total_penalty += extra_penalty
 
         # Compute and return the penalized score    
         penalized_score = self.score(observed_sum=observed_sum, probs=probs, penalty=total_penalty, q=current_q_mle, alpha=self.alpha)
@@ -338,7 +342,7 @@ class MDSS(object):
 
     def bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
                   penalty: float, num_iters: int, direction: str = 'positive', verbose: bool = False,
-                  seed: int = 0, thread_id: int = 0):
+                  seed: int = 0, thread_id: int = 0, feature_penalty: float = 0.0):
         """
         :param coordinates: data frame containing having as columns the covariates/features
         :param probs: data series containing the probabilities/expected outcomes
@@ -376,7 +380,8 @@ class MDSS(object):
                 outcomes=outcomes,
                 penalty=penalty,
                 current_subset=current_subset,
-                direction=direction
+                direction=direction,
+                feature_penalty=feature_penalty
             )
 
             while flags.sum() < len(coordinates.columns):
@@ -401,7 +406,8 @@ class MDSS(object):
                     penalty=penalty,
                     direction=direction
                 )
-
+                
+                #CategoricalDtype is used to represent contiguous features
                 if coordinates[attribute_to_scan].dtype.str == CategoricalDtype.str:                    
                     temp_names, temp_score = self.choose_connected_aggregates(
                         aggregates=aggregates,
@@ -409,7 +415,8 @@ class MDSS(object):
                         penalty=penalty,
                         all_observed_sum=all_observed_sum,
                         all_probs=all_probs,
-                        attribute_to_scan = coordinates[attribute_to_scan]              
+                        attribute_to_scan = coordinates[attribute_to_scan],
+                        feature_penalty=feature_penalty              
                     )
                 else:
                     temp_names, temp_score = self.choose_aggregates(
@@ -418,7 +425,8 @@ class MDSS(object):
                         penalty=penalty,
                         all_observed_sum=all_observed_sum,
                         all_probs=all_probs,
-                        direction=direction
+                        direction=direction,
+                        feature_penalty=feature_penalty
                     )
 
                 temp_subset = current_subset.copy()
@@ -436,7 +444,8 @@ class MDSS(object):
                     outcomes=outcomes,
                     penalty=penalty,
                     current_subset=temp_subset,
-                    direction=direction
+                    direction=direction,
+                    feature_penalty=feature_penalty
                 )
 
                 # reset flags to 0 if we have improved score
@@ -471,7 +480,7 @@ class MDSS(object):
 
     def run_bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
                       penalty: float, num_iters: int, direction: str = 'positive',
-                      num_threads: int = cpu_count(), verbose: bool = False):
+                      num_threads: int = cpu_count(), verbose: bool = False, feature_penalty: float = 0.0):
 
         if num_threads > 1:
             # define thread pool
@@ -513,7 +522,8 @@ class MDSS(object):
                 penalty=penalty,
                 num_iters=num_iters,
                 direction=direction,
-                verbose=verbose
+                verbose=verbose,
+                feature_penalty=feature_penalty
             )
 
         return best_subset, best_score
@@ -564,7 +574,8 @@ if __name__ == "__main__":
         num_iters=bias_scan_num_iters,
         direction='negative',
         num_threads=1, # you can set it to 1 to see the difference
-        verbose=False
+        verbose=False,
+        feature_penalty=0.001
     )
 
     print("Ellapsed: %.3f\n" % (time.time() - start))
