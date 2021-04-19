@@ -453,8 +453,8 @@ class MDSS(object):
                     flags.fill(0)
 
                 # TODO: confirm with Skyler: sanity check to make sure score has not decreased
-                # assert temp_score >= current_score - 1E-6, \
-                #     "WARNING SCORE HAS DECREASED from %.3f to %.3f" % (current_score, temp_score)
+                assert temp_score >= current_score - 1E-6, \
+                    "WARNING SCORE HAS DECREASED from %.3f to %.3f" % (current_score, temp_score)
 
                 flags[attribute_number_to_scan] = 1
                 current_subset = temp_subset
@@ -500,7 +500,7 @@ class MDSS(object):
 
                 results.append(pool.apply_async(
                     self.bias_scan,
-                    (coordinates, outcomes, probs, penalty, iters, direction, False, seeds[i], i)
+                    (coordinates, outcomes, probs, penalty, iters, direction, False, seeds[i], i, feature_penalty)
                 ))
 
             # close thread pool & wait for all jobs to be done
