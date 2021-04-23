@@ -11,7 +11,7 @@ def get_entire_subset():
     return {}
 
 
-def get_random_subset(coordinates: pd.DataFrame, prob: float, min_elements: int = 0):
+def get_random_subset(coordinates: pd.DataFrame, prob: float, min_elements: int = 0, contiguous: dict = {}):
     """
     Returns a random subset
 
@@ -30,7 +30,8 @@ def get_random_subset(coordinates: pd.DataFrame, prob: float, min_elements: int 
         temp = coordinates[column_name].unique()
 
         # if the feature is a contiguous feature
-        if coordinates[column_name].dtype.str == CategoricalDtype.str:
+        if column_name in contiguous.keys():
+            temp = contiguous[column_name][0]
             value_probs = np.random.random(len(temp))
             
             # each value is randomly assigned probabilities and
@@ -53,11 +54,10 @@ def get_random_subset(coordinates: pd.DataFrame, prob: float, min_elements: int 
                     
                     indices.append(indices[-1] - down + up)
 
-                subset_random_values[column_name] = temp[indices].tolist()
+                subset_random_values[column_name] = [temp[i] for i in indices]
 
             else:
                 subset_random_values[column_name] = []
-
         else:
             # include each attribute value with probability = prob
             mask_values = np.random.rand(len(temp)) < prob

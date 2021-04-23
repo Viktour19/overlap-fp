@@ -14,15 +14,7 @@ from BiasScan.solver.bisection_bj import *
 from BiasScan.util.contiguous_feature import get_contiguous_set_indices
 from pandas.api.types import CategoricalDtype
 
-
 # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
-
-class ContiguousSubset:
-    def __init__(self, observed_sum, probs, penalty, names):
-        self.observed_sum = observed_sum
-        self.probs  = probs
-        self.penalty = penalty
-        self.feature_values = names
 
 class MDSS(object):
     def __init__(self, optim_q_mle: Callable, solver_q_min: Callable, solver_q_max: Callable, compute_qs: Callable, score: Callable, alpha: float= None, missing_label = 'missing'):
@@ -36,7 +28,8 @@ class MDSS(object):
     
 
     def get_aggregates(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
-                       current_subset: dict, column_name: str, penalty: float, direction: str ='positive'):
+                       current_subset: dict, column_name: str, penalty: float, direction: str ='positive',
+                       is_attr_contiguous=False):
         """
         Conditioned on the current subsets of values for all other attributes,
         compute the summed outcome (observed_sum = \sum_i y_i) and all probabilities p_i
@@ -76,21 +69,27 @@ class MDSS(object):
             # all probabilities p_i
             probs = group.iloc[:, -1].values
 
-            # compute q_min and q_max for the attribute value
-            exist, q_mle, q_min, q_max = self.compute_qs(self.optim_q_mle, self.solver_q_min, self.solver_q_max,
-             observed_sum, probs, penalty, direction=direction, alpha=self.alpha)
-
-            # Add to aggregates, and add q_min and q_max to thresholds.
-            # Note that thresholds is a set so duplicates will be removed automatically.
-            if exist:
+            if is_attr_contiguous:
                 aggregates[name] = {
-                    'q_mle': q_mle,
-                    'q_min': q_min,
-                    'q_max': q_max,
                     'observed_sum': observed_sum,
                     'probs': probs
                 }
-                thresholds.update([q_min, q_max])
+            else:
+                # compute q_min and q_max for the attribute value
+                exist, q_mle, q_min, q_max = self.compute_qs(self.optim_q_mle, self.solver_q_min, self.solver_q_max,
+                observed_sum, probs, penalty, direction=direction, alpha=self.alpha)
+
+                # Add to aggregates, and add q_min and q_max to thresholds.
+                # Note that thresholds is a set so duplicates will be removed automatically.
+                if exist:
+                    aggregates[name] = {
+                        'q_mle': q_mle,
+                        'q_min': q_min,
+                        'q_max': q_max,
+                        'observed_sum': observed_sum,
+                        'probs': probs
+                    }
+                    thresholds.update([q_min, q_max])
 
         # We also keep track of the summed outcomes \sum_i y_i and the probabilities p_i for the case where _
         # all_ values of that attribute are considered (regardless of whether they contribute positively to score).
@@ -120,6 +119,17 @@ class MDSS(object):
         :param direction: direction of bias positive/negative
         :return:
         """
+
+        # v_sum = 0.0
+        # v_probs = []
+        # for key in aggregates.keys():
+        #     v_sum += aggregates[key]['observed_sum']
+        #     v_probs += aggregates[key]['observed_sum']
+
+        # assert len(v_probs) == len(all_probs), print(len(v_probs), len(all_probs))
+        # assert v_sum == all_observed_sum, all_observed_sum
+
+
         # initialize
         best_score = 0
         best_names = []
@@ -178,102 +188,80 @@ class MDSS(object):
 
         return [best_names, best_score]
 
-    
-    def choose_connected_aggregates(self, aggregates: dict, thresholds: list, penalty: float, all_observed_sum: float, all_probs: list, 
-                                    direction: str='positive', attribute_to_scan = None, feature_penalty: float = 0.0):
-
-        missing_label = self.missing_label
-        no_missing_label = '~' + missing_label
-
-        contiguous_set_indices = get_contiguous_set_indices(attribute_to_scan)
-        all_feature_values = list(attribute_to_scan.cat.categories)
+    def choose_connected_aggregates(self, aggregates: dict, penalty: float, all_observed_sum: float, all_probs: list, 
+                                    direction: str='positive', attribute_to_scan = None, feature_penalty: float = 0.0, contiguous_tuple = []):
 
         best_names = []
-        best_score = -1e10
-        
-        
+        best_score = current_score = -1e10
+
+        contiguous_set_indices = get_contiguous_set_indices(contiguous_tuple[0])
+
+        all_feature_values = contiguous_tuple[0]
+
+        # we score the O(k^2) ranges of contiguous indices
+        # for each contiguous range in the set of ranges
         for contiguous_subset in contiguous_set_indices:
+            # no counts and no probabilities
             observed_sum = 0.0
             probs = []
-            curr_penalty = penalty
-            #make a dictionary of subsets with and without missing.
-            
-            contiguous_subset_dict = {}
 
-            contiguous_subset_dict[missing_label] = ContiguousSubset(observed_sum, probs, penalty, '')
-            contiguous_subset_dict[no_missing_label] = ContiguousSubset(observed_sum, probs, penalty, '')
-            
+            # for each bin in the range
             for feature_value_index in contiguous_subset:
                 feature_value = all_feature_values[feature_value_index]
                 
                 if feature_value in aggregates.keys():
-                    
                     observed_sum += aggregates[feature_value]['observed_sum']
                     probs = probs + aggregates[feature_value]['probs'].tolist()
+
+            probs_arr = np.array(probs)
+            current_q_mle = self.optim_q_mle(observed_sum, probs_arr, direction=direction, alpha=self.alpha)
+            # we only penalize the range irrespective of the number of bins once
+            current_score = self.score(observed_sum=observed_sum, probs=probs_arr, penalty=penalty, q=current_q_mle, alpha=self.alpha)
             
-            contiguous_subset_dict[no_missing_label].observed_sum = observed_sum
-            contiguous_subset_dict[no_missing_label].probs = probs
-            contiguous_subset_dict[no_missing_label].feature_values = [all_feature_values[i] for i in contiguous_subset]
+            # if contiguous_subset == list(range(len(all_feature_values))):
+            #     print("from ranges:", observed_sum, len(probs), current_score)
 
-            # check if we will include Missing Value or not.
-            
-            if missing_label in aggregates.keys():
-                #have score of two subsets to be checked
+            if current_score > best_score:
+                best_names = [all_feature_values[i] for i in contiguous_subset]
+                best_score = current_score
 
-                curr_penalty= penalty * 2
-                observed_sum += aggregates[missing_label]['observed_sum']
-                probs = probs + aggregates[missing_label]['probs'].tolist()
-                
-                contiguous_subset_dict[missing_label].observed_sum = observed_sum
-                contiguous_subset_dict[missing_label].probs = probs
-                contiguous_subset_dict[missing_label].feature_values = [all_feature_values[i] for i in contiguous_subset]
+        # the case where there is 'missing' data in this feature; 
+        if contiguous_tuple[1] is not None and contiguous_tuple[1] in aggregates.keys():
+            for contiguous_subset in contiguous_set_indices:
+                # take into consideration the counts and probs of missing records
+                observed_sum = aggregates[contiguous_tuple[1]]['observed_sum']
+                probs = aggregates[contiguous_tuple[1]]['probs'].tolist()
 
-                
-                contiguous_subset_dict[missing_label].feature_values.append(missing_label)
-                contiguous_subset_dict[missing_label].penalty = curr_penalty
-                
-            else:
-                curr_penalty = penalty * 2
-                contiguous_subset_dict[missing_label].feature_values = [all_feature_values[i] for i in contiguous_subset]
-                contiguous_subset_dict[missing_label].feature_values.append(missing_label)
-                contiguous_subset_dict[missing_label].observed_sum = observed_sum
-                contiguous_subset_dict[missing_label].probs = probs
-                contiguous_subset_dict[missing_label].penalty = curr_penalty
-                
-                            
-            for key in contiguous_subset_dict.keys():
-                #calculate score for both missing and not missing case
-                #need to convert list of probs into an array.
+                # for each bin in the range
+                for feature_value_index in contiguous_subset:
+                    feature_value = all_feature_values[feature_value_index]
+                    
+                    if feature_value in aggregates.keys():
+                        observed_sum += aggregates[feature_value]['observed_sum']
+                        probs = probs + aggregates[feature_value]['probs'].tolist()
 
-                observed_sum = contiguous_subset_dict[key].observed_sum
-                probs = np.array(contiguous_subset_dict[key].probs)
-                current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
+                probs_arr = np.array(probs)
+                current_q_mle = self.optim_q_mle(observed_sum, probs_arr, direction=direction, alpha=self.alpha)
+                # we penalize once for the range and once for the missing bin
+                current_score = self.score(observed_sum=observed_sum, probs=probs_arr, penalty= 2 * penalty, q=current_q_mle, alpha=self.alpha)
                 
-                current_score = self.score(observed_sum=observed_sum, probs=probs, penalty=contiguous_subset_dict[key].penalty, q=current_q_mle, alpha=self.alpha)
-
                 if current_score > best_score:
-                    best_names = contiguous_subset_dict[key].feature_values
+                    best_names = [all_feature_values[i] for i in contiguous_subset] + [contiguous_tuple[1]]
                     best_score = current_score
- 
-        #cover just the missing case:
-        observed_sum = 0.0
-        probs = []
-        curr_penalty = penalty
 
-        if missing_label in aggregates.keys():
-            observed_sum += aggregates[missing_label]['observed_sum']
-            probs = probs + aggregates[missing_label]['probs'].tolist()
+            # scanning over records that only have missing values
+            observed_sum = aggregates[contiguous_tuple[1]]['observed_sum']
+            probs = aggregates[contiguous_tuple[1]]['probs'].tolist()
 
-        probs = np.array(probs)
+            probs_arr = np.array(probs)
+            current_q_mle = self.optim_q_mle(observed_sum, probs_arr, direction=direction, alpha=self.alpha)
+            # we penalize once for the missing bin
+            current_score = self.score(observed_sum=observed_sum, probs=probs_arr, penalty=penalty, q=current_q_mle, alpha=self.alpha)
+            
+            if current_score > best_score:
+                best_names = [contiguous_tuple[1]]
+                best_score = current_score
 
-        current_q_mle = self.optim_q_mle(observed_sum, probs, direction=direction, alpha=self.alpha)
-        current_score = self.score(observed_sum=observed_sum, probs=probs, penalty=curr_penalty, q=current_q_mle, alpha=self.alpha)
-        
-        if current_score > best_score:
-            best_names = [missing_label]
-            best_score = current_score
-
-    
         #cover the all case:
         current_q_mle = self.optim_q_mle(all_observed_sum, all_probs, direction=direction, alpha=self.alpha)
         current_score = self.score(observed_sum=all_observed_sum, probs=all_probs, penalty=0, q=current_q_mle, alpha=self.alpha)
@@ -287,7 +275,8 @@ class MDSS(object):
 
     # score_current subset
     def score_current_subset(self, coordinates: pd.DataFrame, probs: pd.Series, outcomes: pd.Series,
-                             penalty: float, current_subset: dict, direction='positive', feature_penalty: float = 0.0):
+                             penalty: float, current_subset: dict, direction='positive', feature_penalty: float = 0.0, 
+                             contiguous={}):
         """
         Just scores the subset without performing ALTSS.
         We still need to determine the MLE value of q.
@@ -321,12 +310,14 @@ class MDSS(object):
 
         # need to change to cater to fact that contiguous value count penalty once
         for key, values in current_subset.items():
-            if coordinates[key].dtype.str == CategoricalDtype.str:
-                # no need to cover the ALL case since the feature with all values included will not be key
-                if self.missing_label in values and len(values) == 1:
+
+            if key in contiguous.keys():
+                if len(values) == 1:
                     total_penalty += 1
-                elif self.missing_label in values:
+                
+                elif contiguous[key][1] in values:
                     total_penalty += 2
+    
                 else:
                     total_penalty += 1
             else:
@@ -342,7 +333,7 @@ class MDSS(object):
 
     def bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
                   penalty: float, num_iters: int, direction: str = 'positive', verbose: bool = False,
-                  seed: int = 0, thread_id: int = 0, feature_penalty: float = 0.0):
+                  seed: int = 0, thread_id: int = 0, feature_penalty: float = 0.0, contiguous={}):
         """
         :param coordinates: data frame containing having as columns the covariates/features
         :param probs: data series containing the probabilities/expected outcomes
@@ -357,10 +348,27 @@ class MDSS(object):
         """
         np.random.seed(seed)
 
+        for key in contiguous.keys():
+
+            assert key in coordinates.columns, ""
+            binslen = len(contiguous[key]) 
+            uniquelen = len(coordinates[key].unique())
+
+            assert (uniquelen == binslen or binslen == uniquelen - 1), \
+                "The attribute values in the ordered list for contiguous feature %s does not match \
+                    the attribute values in the data".format(key)
+
+            missing_bin_value = None
+            if binslen == uniquelen - 1:
+                missing_bin_value = list(set(coordinates[key].unique()).difference(set(contiguous[key])))[0]
+
+            contiguous[key] = (contiguous[key], missing_bin_value)
+
         # initialize
         best_subset = {}
         best_score = -1e10
         best_scores = []
+        
         for i in range(num_iters):
             # flags indicates that the method has optimized over subsets for a given attribute.
             # The iteration ends when it cannot further increase score by optimizing over
@@ -371,7 +379,7 @@ class MDSS(object):
             # Starting subset. Note that we start with all values for the first iteration
             # and random values for succeeding iterations.
             current_subset = get_entire_subset() if (i == 0 and thread_id == 0) \
-                else get_random_subset(coordinates, np.random.rand(1).item(), 10)
+                else get_random_subset(coordinates, np.random.rand(1).item(), 10, contiguous)
 
             # score the entire population
             current_score = self.score_current_subset(
@@ -396,6 +404,8 @@ class MDSS(object):
                 if attribute_to_scan in current_subset:
                     del current_subset[attribute_to_scan]
 
+                is_attr_contiguous = attribute_to_scan in contiguous.keys()
+
                 # call get_aggregates and choose_aggregates to find best subset of attribute values
                 aggregates, thresholds, all_observed_sum, all_probs = self.get_aggregates(
                     coordinates=coordinates,
@@ -404,19 +414,19 @@ class MDSS(object):
                     current_subset=current_subset,
                     column_name=attribute_to_scan,
                     penalty=penalty,
-                    direction=direction
+                    direction=direction,
+                    is_attr_contiguous = is_attr_contiguous
                 )
                 
-                #CategoricalDtype is used to represent contiguous features
-                if coordinates[attribute_to_scan].dtype.str == CategoricalDtype.str:                    
+                if is_attr_contiguous:                   
                     temp_names, temp_score = self.choose_connected_aggregates(
                         aggregates=aggregates,
-                        thresholds=thresholds,
                         penalty=penalty,
                         all_observed_sum=all_observed_sum,
                         all_probs=all_probs,
                         attribute_to_scan = coordinates[attribute_to_scan],
-                        feature_penalty=feature_penalty              
+                        feature_penalty=feature_penalty,
+                        contiguous_tuple=contiguous[attribute_to_scan]     
                     )
                 else:
                     temp_names, temp_score = self.choose_aggregates(
@@ -445,7 +455,8 @@ class MDSS(object):
                     penalty=penalty,
                     current_subset=temp_subset,
                     direction=direction,
-                    feature_penalty=feature_penalty
+                    feature_penalty=feature_penalty,
+                    contiguous=contiguous
                 )
 
                 # reset flags to 0 if we have improved score
@@ -453,8 +464,14 @@ class MDSS(object):
                     flags.fill(0)
 
                 # TODO: confirm with Skyler: sanity check to make sure score has not decreased
+
+                fv_len = 0.0
+                for k in current_subset.keys():
+                    fv_len += len(current_subset[k])
+
                 assert temp_score >= current_score - 1E-6, \
-                    "WARNING SCORE HAS DECREASED from %.3f to %.3f" % (current_score, temp_score)
+                    "WARNING SCORE HAS DECREASED from %.3f to %.3f, %s, \n\n %s, \n\n %s, %d" % \
+                        (current_score, temp_score, attribute_to_scan, str(current_subset), str(temp_subset), fv_len)
 
                 flags[attribute_number_to_scan] = 1
                 current_subset = temp_subset
@@ -480,7 +497,8 @@ class MDSS(object):
 
     def run_bias_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
                       penalty: float, num_iters: int, direction: str = 'positive',
-                      num_threads: int = cpu_count(), verbose: bool = False, feature_penalty: float = 0.0):
+                      num_threads: int = cpu_count(), verbose: bool = False, feature_penalty: float = 0.0,
+                      contiguous = {}):
 
         if num_threads > 1:
             # define thread pool
@@ -500,7 +518,7 @@ class MDSS(object):
 
                 results.append(pool.apply_async(
                     self.bias_scan,
-                    (coordinates, outcomes, probs, penalty, iters, direction, False, seeds[i], i, feature_penalty)
+                    (coordinates, outcomes, probs, penalty, iters, direction, False, seeds[i], i, feature_penalty, contiguous)
                 ))
 
             # close thread pool & wait for all jobs to be done
@@ -523,7 +541,8 @@ class MDSS(object):
                 num_iters=num_iters,
                 direction=direction,
                 verbose=verbose,
-                feature_penalty=feature_penalty
+                feature_penalty=feature_penalty,
+                contiguous=contiguous
             )
 
         return best_subset, best_score

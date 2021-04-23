@@ -2,11 +2,8 @@ from pandas.api.types import CategoricalDtype
 import pandas as pd
 import numpy as np
 
-def get_contiguous_set_indices(contiguous_feature: pd.Series):
+def get_contiguous_set_indices(feature_values: list):
 
-    assert contiguous_feature.dtype.str == CategoricalDtype.str
-    feature_values = list(contiguous_feature.cat.categories)
-    
     contiguous_bins_index = []
     l = len(feature_values)
 
