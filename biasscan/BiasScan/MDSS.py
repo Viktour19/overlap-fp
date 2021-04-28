@@ -583,14 +583,6 @@ if __name__ == "__main__":
         compute_qs=compute_qs_bias,
         score=score_bias
     )
-    
-    
-    current_subset = {'housing': ['A152'], 'credithistory': ['A32', 'A31', 'A34', 'A30'], 'purpose': ['A42'], 'employmentsince': ['A73'], 'job': ['A172', 'A173'], 'savings': ['A61'], 'property': ['A121', 'A123'], 'foreignworker': ['A201'], 'duration_bin': ['12-13']}
-
-    # current_subset = {'housing': ['A152'], 'credithistory': ['A32', 'A31', 'A34', 'A30'], 'purpose': ['A42'], 'employmentsince': ['A73'], 'job': ['A172', 'A173'], 'savings': ['A61'], 'property': ['A121', 'A123'], 'foreignworker': ['A201']}
-    score = scanner.score_current_subset(Data1[Data1.columns[:-2]], Data2_probs, Data2_outcomes, bias_scan_penalty, current_subset, contiguous=contiguous, direction='negative')
-    print("manual score: ", score)
-
     start = time.time()
 
     [best_subset, best_score] = scanner.run_bias_scan(
