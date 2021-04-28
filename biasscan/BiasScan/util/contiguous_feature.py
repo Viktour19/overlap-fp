@@ -1,4 +1,3 @@
-from pandas.api.types import CategoricalDtype
 import pandas as pd
 import numpy as np
 

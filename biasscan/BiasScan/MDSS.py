@@ -12,7 +12,6 @@ from BiasScan.solver.bisection_bias import *
 from BiasScan.solver.bisection_bj import *
 
 from BiasScan.util.contiguous_feature import get_contiguous_set_indices
-from pandas.api.types import CategoricalDtype
 
 # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
@@ -310,8 +309,7 @@ class MDSS(object):
 
         # need to change to cater to fact that contiguous value count penalty once
         for key, values in current_subset.items():
-
-            if key in contiguous.keys():
+            if key in list(contiguous.keys()):
                 if len(values) == 1:
                     total_penalty += 1
                 
@@ -517,8 +515,7 @@ class MDSS(object):
                 reminder = reminder - 1
 
                 results.append(pool.apply_async(
-                    self.bias_scan,
-                    (coordinates, outcomes, probs, penalty, iters, direction, False, seeds[i], i, feature_penalty, contiguous)
+                    self.bias_scan, (coordinates, outcomes, probs, penalty, iters, direction, False, seeds[i], i, feature_penalty, contiguous)
                 ))
 
             # close thread pool & wait for all jobs to be done
@@ -552,12 +549,16 @@ if __name__ == "__main__":
     # prepare data
     Data1 = pd.read_csv("datasets/german_scan.csv")
 
+    # this creates the datastructure for contiguous features for the
+    # columns with the string 'bin' in their names
+    contiguous = {}
     for col in Data1.columns:
         if 'bin' in col:
             s_idx = np.argsort([float(x.split('-')[0]) for x in Data1[col].unique()])
             v_sorted = Data1[col].unique()[s_idx]
-            Data1[col] = pd.Categorical(Data1[col].values, categories=v_sorted, ordered=True)
+            contiguous[col] = v_sorted.tolist()
 
+    Data1['observed'] = 1 - Data1['observed']
     Data2_outcomes = Data1['observed']
     Data2_probs = Data1['expectation']
 
@@ -582,6 +583,13 @@ if __name__ == "__main__":
         compute_qs=compute_qs_bias,
         score=score_bias
     )
+    
+    
+    current_subset = {'housing': ['A152'], 'credithistory': ['A32', 'A31', 'A34', 'A30'], 'purpose': ['A42'], 'employmentsince': ['A73'], 'job': ['A172', 'A173'], 'savings': ['A61'], 'property': ['A121', 'A123'], 'foreignworker': ['A201'], 'duration_bin': ['12-13']}
+
+    # current_subset = {'housing': ['A152'], 'credithistory': ['A32', 'A31', 'A34', 'A30'], 'purpose': ['A42'], 'employmentsince': ['A73'], 'job': ['A172', 'A173'], 'savings': ['A61'], 'property': ['A121', 'A123'], 'foreignworker': ['A201']}
+    score = scanner.score_current_subset(Data1[Data1.columns[:-2]], Data2_probs, Data2_outcomes, bias_scan_penalty, current_subset, contiguous=contiguous, direction='negative')
+    print("manual score: ", score)
 
     start = time.time()
 
@@ -591,10 +599,11 @@ if __name__ == "__main__":
         probs=Data2_probs,
         penalty=bias_scan_penalty,
         num_iters=bias_scan_num_iters,
-        direction='negative',
-        num_threads=1, # you can set it to 1 to see the difference
-        verbose=False,
-        feature_penalty=0.001
+        direction='positive',
+        num_threads=10, # you can set it to 1 to see the difference
+        feature_penalty=0.00,
+        contiguous=contiguous,
+        verbose=True
     )
 
     print("Ellapsed: %.3f\n" % (time.time() - start))

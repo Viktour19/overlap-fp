@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-from pandas.api.types import CategoricalDtype
-
 
 def get_entire_subset():
     """
