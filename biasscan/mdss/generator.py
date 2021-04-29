@@ -12,7 +12,6 @@ def get_entire_subset():
 def get_random_subset(coordinates: pd.DataFrame, prob: float, min_elements: int = 0, contiguous: dict = {}):
     """
     Returns a random subset
-
     :param coordinates: data frame containing having as columns the features
     :param prob: probability to select a value of a feature
     :param min_elements: minimum number of elements to be included in the randomly generated sub-population

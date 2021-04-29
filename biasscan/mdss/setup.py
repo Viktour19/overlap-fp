@@ -6,13 +6,11 @@ from Cython.Distutils import build_ext
 
 setup(
     
-    name="biasscan",
+    name="mdss",
     ext_modules=cythonize(
         [
-           Extension("biasscan.*", ["*.py"]),
-           Extension("optim.*", ["optim/*.py"]),
-           Extension("solver.*", ["solver/*.py"]),
-           Extension("util.*", ["util/*.py"])
+           Extension("mdss.*", ["*.py"]),
+           Extension("scoringfunctions.*", ["scoringfunctions/*.py"])
         ],
         build_dir="build",
         compiler_directives=dict(
@@ -21,5 +19,5 @@ setup(
     cmdclass=dict(
         build_ext=build_ext
     ),
-    packages=["optim", "solver", "util"]
+    packages=["scoringfunctions"]
 )
