@@ -257,7 +257,7 @@ class MDSS(object):
   
         return [best_names, best_score]
      
-    def score_current_subset(self, coordinates: pd.DataFrame, probs: pd.Series, outcomes: pd.Series,
+    def score_current_subset(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
                              current_subset: dict, penalty: float, contiguous={}):
         """
         Just scores the subset without performing ALTSS.
@@ -361,8 +361,8 @@ class MDSS(object):
             # score the entire population
             current_score = self.score_current_subset(
                 coordinates=coordinates,
-                probs=probs,
                 outcomes=outcomes,
+                probs=probs,
                 penalty=penalty,
                 current_subset=current_subset,
                 contiguous=contiguous
@@ -420,8 +420,8 @@ class MDSS(object):
                 # above includes only the penalty for the current attribute.
                 temp_score = self.score_current_subset(
                     coordinates=coordinates,
-                    probs=probs,
                     outcomes=outcomes,
+                    probs=probs,
                     penalty=penalty,
                     current_subset=temp_subset,
                     contiguous=contiguous
@@ -537,7 +537,7 @@ if __name__ == "__main__":
     bias_scan_num_iters = 10
     
     from mdss.ScoringFunctions.Bernoulli import Bernoulli
-    sf = Bernoulli(direction = 'negative')
+    sf = Bernoulli(direction = 'positive')
     
     scanner = MDSS(sf)
     start = time.time()
