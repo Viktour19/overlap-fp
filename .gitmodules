@@ -1,0 +1,3 @@
+[submodule "mdscan"]
+	path = mdscan
+	url = git@github.ibm.com:AIScience/mdscan.git
