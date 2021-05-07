@@ -17,7 +17,8 @@ class MDSS(object):
         self.scoring_function = scoring_function
 
     def get_aggregates(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
-                       current_subset: dict, column_name: str, penalty: float, is_attr_contiguous=False):
+                       current_subset: dict, column_name: str, penalty: float, 
+                       is_attr_contiguous=False, feature_penalty: float = 0.0):
         """
         Conditioned on the current subsets of values for all other attributes,
         compute the summed outcome (observed_sum = \sum_i y_i) and all probabilities p_i
@@ -33,6 +34,7 @@ class MDSS(object):
         :param column_name: attribute name to scan over
         :param penalty: penalty coefficient
         :param is_attr_contiguous: is the current attribute contiguous
+        :param feature_penalty (optional): extra penalty for the number of features in S*
         :return: dictionary of aggregates, sorted thresholds (roots), observed sum of the subset, array of observed
         probabilities
         """
@@ -90,7 +92,7 @@ class MDSS(object):
         return [aggregates, sorted(thresholds), all_observed_sum, all_probs]
 
     def choose_aggregates(self, aggregates: dict, thresholds: list, penalty: float, all_observed_sum: float,
-                          all_probs: list):
+                          all_probs: list, feature_penalty: float = 0.0):
         """
         Having previously computed the aggregates and the distinct q thresholds
         to consider in the get_aggregates function,we are now ready to choose the best
@@ -105,7 +107,8 @@ class MDSS(object):
         :param penalty: penalty coefficient
         :param all_observed_sum: sum of observed binary outcomes for all i
         :param all_probs: data series containing all the probabilities/expected outcomes
-        :return:
+        :param feature_penalty (optional): extra penalty for the number of features in S*
+        :return [best subset (of attribute values), best score]:
         """
         # initialize
         best_score = 0
@@ -161,14 +164,14 @@ class MDSS(object):
         # Keep track of the best score, best q, and best subset of attribute values found.
         # Note that if the best subset contains all values of the given attribute,
         # we return an empty list for best_names.
-        if current_score > best_score:
+        if current_score > best_score - feature_penalty:
             best_score = current_score
             best_names = []
 
         return [best_names, best_score]
     
     def choose_connected_aggregates(self, aggregates: dict, penalty: float, all_observed_sum: float, all_probs: list, 
-                                    contiguous_tuple = []):
+                                    contiguous_tuple = [], feature_penalty: float = 0.0):
         """
         :param aggregates: dictionary of aggregates. For each feature value, it has observed_sum,
         and the probabilities
@@ -176,7 +179,8 @@ class MDSS(object):
         :param all_observed_sum: sum of observed binary outcomes for all i
         :param all_probs: data series containing all the probabilities/expected outcomes
         :param contiguous_tuple: tuple of order of the feature values, and if missing or unknown value exists
-        :return:
+        :param feature_penalty (optional): extra penalty for the number of features in S*
+        :return [best subset (of attribute values), best score]:
         """
         best_names = []
         best_score = current_score = -1e10
@@ -251,14 +255,14 @@ class MDSS(object):
         current_q_mle = scoring_function.qmle(all_observed_sum, all_probs)
         current_score = scoring_function.score(observed_sum=all_observed_sum, probs=all_probs, penalty=0, q=current_q_mle)
 
-        if current_score > best_score:
+        if current_score > best_score - feature_penalty:
             best_names = []
             best_score = current_score
   
         return [best_names, best_score]
      
     def score_current_subset(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series,
-                             current_subset: dict, penalty: float, contiguous={}):
+                             current_subset: dict, penalty: float, contiguous={}, feature_penalty: float = 0.0):
         """
         Just scores the subset without performing ALTSS.
         We still need to determine the MLE value of q.
@@ -269,6 +273,7 @@ class MDSS(object):
         :param current_subset: current subset to be scored
         :param penalty: penalty coefficient
         :param contiguous (optional): contiguous features and thier order
+        :param feature_penalty (optional): extra penalty for the number of features in S*
         :return: penalized score of subset
         """
 
@@ -306,19 +311,24 @@ class MDSS(object):
                 total_penalty += len(values)
 
         total_penalty *= penalty
+        extra_penalty = len(current_subset.items()) * feature_penalty
+        total_penalty += extra_penalty
+
         # Compute and return the penalized score    
         penalized_score = scoring_function.score(observed_sum, probs, total_penalty, current_q_mle)
         return penalized_score
 
     def scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series, penalty: float,
-                    num_iters: int, contiguous={}, verbose: bool = False, seed: int = 0, thread_id: int = 0):
+                    num_iters: int, contiguous={}, feature_penalty: float = 0.0,
+                    verbose: bool = False, seed: int = 0, thread_id: int = 0):
         """
         :param coordinates: data frame containing having as columns the covariates/features
         :param outcomes: data series containing the outcomes/observed outcomes
         :param probs: data series containing the probabilities/expected outcomes
         :param penalty: penalty coefficient
         :param num_iters: number of iteration
-        :param contiguous: contiguous features and their order
+        :param contiguous (optional): contiguous features and their order
+        :param feature_penalty (optional): extra penalty for the number of features in S*
         :param verbose: logging flag
         :param seed: numpy seed. Default equals 0
         :param thread_id: id of the worker thread
@@ -365,7 +375,8 @@ class MDSS(object):
                 probs=probs,
                 penalty=penalty,
                 current_subset=current_subset,
-                contiguous=contiguous
+                contiguous=contiguous,
+                feature_penalty=feature_penalty
             )
 
             while flags.sum() < len(coordinates.columns):
@@ -389,7 +400,8 @@ class MDSS(object):
                     current_subset=current_subset,
                     column_name=attribute_to_scan,
                     penalty=penalty,
-                    is_attr_contiguous=is_attr_contiguous
+                    is_attr_contiguous=is_attr_contiguous,
+                    feature_penalty=feature_penalty
                 )
 
                 if is_attr_contiguous:                   
@@ -398,7 +410,8 @@ class MDSS(object):
                         penalty=penalty,
                         all_observed_sum=all_observed_sum,
                         all_probs=all_probs,
-                        contiguous_tuple=contiguous[attribute_to_scan]     
+                        contiguous_tuple=contiguous[attribute_to_scan],
+                        feature_penalty=feature_penalty     
                     )
                 else:
                     temp_names, temp_score = self.choose_aggregates(
@@ -406,7 +419,8 @@ class MDSS(object):
                         thresholds=thresholds,
                         penalty=penalty,
                         all_observed_sum=all_observed_sum,
-                        all_probs=all_probs
+                        all_probs=all_probs,
+                        feature_penalty=feature_penalty
                     )
 
                 temp_subset = current_subset.copy()
@@ -424,7 +438,8 @@ class MDSS(object):
                     probs=probs,
                     penalty=penalty,
                     current_subset=temp_subset,
-                    contiguous=contiguous
+                    contiguous=contiguous,
+                    feature_penalty=feature_penalty
                 )
 
                 # reset flags to 0 if we have improved score
@@ -458,8 +473,22 @@ class MDSS(object):
         return best_subset, best_score
 
     def parallel_scan(self, coordinates: pd.DataFrame, outcomes: pd.Series, probs: pd.Series, penalty: float,
-                    num_iters: int, contiguous={}, verbose: bool = False, seed: int = 0, cpu: float = 0.5):
-
+                    num_iters: int, contiguous={}, feature_penalty: float = 0.0, verbose: bool = False, 
+                    seed: int = 0, cpu: float = 0.5):
+        """
+        Run scan on multiple cores if they are available
+        :param coordinates: data frame containing having as columns the covariates/features
+        :param outcomes: data series containing the outcomes/observed outcomes
+        :param probs: data series containing the probabilities/expected outcomes
+        :param penalty: penalty coefficient
+        :param num_iters: number of iteration
+        :param contiguous: contiguous features and their order
+        :param feature_penalty: extra penalty for the number of features in S*
+        :param verbose: logging flag
+        :param seed: numpy seed. Default equals 0
+        :param cpu: between 0 and 1 the proportion of cpus available to use
+        :return: [best subset, best score]
+        """
         num_threads = int(cpu_count() * cpu)
 
         if num_threads > 1:
@@ -480,7 +509,7 @@ class MDSS(object):
 
                 results.append(pool.apply_async(
                     self.scan, (coordinates, outcomes, probs, penalty, iters, contiguous,
-                     verbose, seeds[i], i)
+                     feature_penalty, verbose, seeds[i], i)
                 ))
 
             # close thread pool & wait for all jobs to be done
@@ -502,6 +531,7 @@ class MDSS(object):
                 penalty=penalty,
                 num_iters=num_iters,
                 contiguous=contiguous,
+                feature_penalty=feature_penalty,
                 verbose=verbose
             )
 
