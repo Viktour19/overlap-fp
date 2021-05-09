@@ -1,0 +1,91 @@
+var_name,label,encoding,selected,comment
+v101,Region,L,1, -
+v102,Type of place of residence,L,1, -
+v106,Highest educational level,O,1, -
+v113,Source of drinking water,L,0,part of wealth_index
+v115,Time to get to water source,N,0,part of wealth_index
+v116,Type of toilet facility,L,0,part of wealth_index
+v119,Household has: electricity,L,0,part of wealth_index
+v120,Household has: radio,L,0,part of wealth_index
+v121,Household has: television,L,0,part of wealth_index
+v122,Household has: refrigerator,L,0,part of wealth_index
+v123,Household has: bicycle,L,0,part of wealth_index
+v124,Household has: motorcycle/scooter,L,0,part of wealth_index
+v125,Household has: car/truck,L,0,part of wealth_index
+v127,Main floor material,L,0,part of wealth_index
+v128,Main wall material,L,0,part of wealth_index
+v129,Main roof material,L,0,part of wealth_index
+v130,Religion,L,0,
+v131,Ethnicity,L,0,
+v133,Education in single years,O,1, -
+v135,Usual resident or visitor,L,0,not a confounder
+v136,Number of household members (listed),N,0, -
+v137,Number of children 5 and under in household (de jure),N,0,
+v138,Number of eligible women in household (de facto),N,0,not a confounder
+v139,De jure region of residence,L,0,variable already represented
+v140,De jure type of place of residence,L,0,variable already represented
+v149,Educational attainment,O,0,variable already represented
+v150,Relationship to household head,L,0,not a confounder
+v151,Sex of household head,L,1,
+v152,Age of household head,N,0,not a confounder
+v153,Household has: telephone (land-line),L,0,part of wealth_index
+v155,Literacy,L,1,
+v157,Frequency of reading newspaper or magazine,O,1,
+v158,Frequency of listening to radio,O,1,
+v159,Frequency of watching television,O,1,
+v161,Type of cooking fuel,L,0,part of wealth_index
+v167,Number of trips in last 12 months,N,0,not a confounder
+v190,Wealth index combined,O,1,
+v191,Wealth index factor score combined (5 decimals),N,0,variable already represented
+v201,Total children ever born,N,0,
+v202,Sons at home,N,0,not a confounder
+v203,Daughters at home,N,0,not a confounder
+v204,Sons elsewhere,N,0,not a confounder
+v205,Daughters elsewhere,N,0,not a confounder
+v206,Sons who have died,N,0,not a confounder
+v207,Daughters who have died,N,0,not a confounder
+v208,Births in last five years,N,0,
+v209,Births in past year,N,0,
+v210,Births in month of interview,N,0,not a confounder
+v213,Currently pregnant,L,0,no variation
+v215,Time since last menstrual period,N,0,
+v217,Knowledge of ovulatory cycle,L,1,
+v218,Number of living children,N,0,variable already represented
+v219,Living children + current pregnancy,N,0,variable already represented
+v220,Living children + current pregnancy (grouped),N,0,variable already represented
+v224,Entries in birth history,N,0,variable already represented
+v226,Time since last period (comp) (months),N,0,variable already represented
+v227,Flag for last period,N,0,variable already represented
+v228,Ever had a terminated pregnancy,L,0,
+v235,Index last child prior to maternity-health (calendar),N,0,variable already represented
+v238,Births in last three years,N,0,variable already represented
+v301,Knowledge of any method,O,1,
+v312,Current contraceptive method,L,0,
+v313,Current use by method type,L,0,
+v361,Pattern of use,L,0,
+v364,Contraceptive use and intention,L,0,variable already represented
+v393,Visited by fieldworker in last 12 months,L,0,
+v394,Visited health facility last 12 months,L,0,
+v501,Current marital status,L,1,
+v502,Currently/formerly/never in union,L,1,
+v513,Cohabitation duration (grouped),L,1,
+v525,Age at first sex,N,1,
+v531,Age at first sex (imputed),N,0,variable already represented
+v532,Flag for V531,L,0,variable already represented
+v536,Recent sexual activity,L,0,
+v602,Fertility preference,L,0,variable already represented
+v605,Desire for more children,L,0,
+v613,Ideal number of children,N,1,
+v614,Ideal number of children (grouped),N,0,variable already represented
+v623,Exposure,L,1,
+v624,Unmet need,L,1,
+v625,Exposure (definition 2),L,0,variable already represented
+v626,Unmet need (definition 2),L,0,variable already represented
+v627,Ideal number of boys,N,0,variable already represented
+v628,Ideal number of girls,N,0,variable already represented
+v629,Ideal number of either sex,N,0,variable already represented
+v012,Respondent's current age,N,1,
+v384a,Heard family planning on radio last few months,N,1,
+v384b,Heard family planning on TV last few months,N,1,
+v384c,Heard family planning on newspaper/magazine last few months,N,1,
+seqn,Sequence Number,N,0,
