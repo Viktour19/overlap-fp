@@ -16,7 +16,7 @@ def select_data(data_path=folder + 'data/KE_2014_Preprocessed.csv'):
     data = pd.read_csv(data_path)
     vvars = list(encoding[encoding['selected'] == 1].var_name)
     data = data[vvars + ['outcome', 'treatment']]
-    
+    print(len(vvars))
     
     timestamp = str(int(time.time()))
     data.to_csv(folder + 'data/fp_select' + timestamp + '.csv', index=False)

@@ -47,25 +47,27 @@ def model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoi
     
     X_df, a, y = get_data(data_path, encode=encode)
     
-    
+    X_df = X_df[~y.isna()]
+    a = a[~y.isna()]
+    y = y[~y.isna()]
+
     strartify_by = (a*2) + y
     X_train, X_test, a_train, a_test, y_train, y_test = train_test_split(X_df, a, y, train_size=0.7, test_size=0.3, shuffle=True, \
                                                                          random_state=1, stratify=strartify_by)
     
-    base_estimator = LogisticRegression(penalty="l2", max_iter=2000, class_weight="balanced", random_state=2, solver='lbfgs')
+    base_estimator = LogisticRegression(penalty="l2", max_iter=3000, class_weight="balanced", random_state=2, solver='lbfgs')
     learner = CalibratedClassifierCV(base_estimator=base_estimator, cv=3, method=method)
     param_grid = {'base_estimator__C': np.logspace(-2, 0, 20)}
-    search = GridSearchCV(learner, param_grid, cv=5, scoring=weighted_auc_scorer)
+    search = GridSearchCV(learner, param_grid, cv=3, scoring=weighted_auc_scorer)
 
     ipw = IPW(make_pipeline(StandardScaler(), search), use_stabilized=True)
     ipw.fit(X_train, a_train)
     
-    ipw = IPW(make_pipeline(StandardScaler(), ipw.learner.steps[1][1].best_estimator_), use_stabilized=True)
-    ipw.fit(X_train, a_train)
+#     ipw = IPW(make_pipeline(StandardScaler(), ipw.learner.steps[1][1].best_estimator_), use_stabilized=True)
+#     ipw.fit(X_train, a_train)
     
     evaluations = causal_eval(ipw,  X_test, a_test, y_test)
     return evaluations, X_test, a_test, y_test
-#     return ipw
 
 
 def causal_eval(model, X_test, a_test, y_test):
@@ -86,7 +88,10 @@ def causal_eval(model, X_test, a_test, y_test):
 def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 1000, title="distribution of marginal diff", effect_type='or'):
     
     X_df, a, y = get_data(data_path)
-    
+    X_df = X_df[~y.isna()]
+    a = a[~y.isna()]
+    y = y[~y.isna()]
+
     strartify_by = (a*2) + y
     X_train, X_test, a_train, a_test, y_train, y_test = train_test_split(X_df, a, y, train_size=0.7, test_size=0.3, shuffle=True, \
                                                                          random_state=1, stratify=strartify_by)
@@ -136,9 +141,9 @@ def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 1000, title="di
     plt.tight_layout()
     plt.savefig(folder + 'figures/effects' + timestamp + '.pdf')
 
-    median = np.median(effects)
-    lower = np.percentile(effects, 2.5)
-    upper = np.percentile(effects, 97.5)
+    median = np.nanmedian(effects)
+    lower = np.nanpercentile(effects, 2.5)
+    upper = np.nanpercentile(effects, 97.5)
     
     return median, lower, upper
 

@@ -53,8 +53,8 @@ def learn_rules(data_path=DATA_PATH, var_encoding=None, relative=False):
     
     X_df, a, y = get_data(data_path)
     
-    ptree = PositiviTree(X_df, a, violation_cutoff=0.1, consistency_cutoff=0.6, n_consistency_tests=200, relative_violations=relative, \
-                         dtc_kws={"criterion": "entropy"}, rfc_kws={"max_features": "auto"})
+    ptree = PositiviTree(X_df, a, violation_cutoff=0.2, consistency_cutoff=0.6, n_consistency_tests=200, relative_violations=relative, \
+                         dtc_kws={"criterion": "gini"}, rfc_kws={"max_features": "auto"})
 
     violating_samples = ptree._get_violating_samples_mask()
     scores, fig = ptree.evaluate_fit(plot_roc=True)    

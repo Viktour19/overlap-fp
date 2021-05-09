@@ -125,3 +125,16 @@ def recent_model(name):
     if len(times) > 0:
         recent_model = files[np.argsort(times)[-1]]
         return recent_model
+
+def covbal_eval(eval, n):
+
+    encoding = pd.read_csv(folder + 'data/encoding.csv')
+    varnames = eval.scores.covariate_balance.sort_values(by='weighted', ascending=False).head(n).index
+    varnames = [v.split('_')[0] for v in list(varnames)]
+
+    return encoding[encoding['var_name'].isin(varnames)].label.values
+
+def description(var_name):
+    encoding = pd.read_csv(folder + 'data/encoding.csv')
+    return encoding[encoding['var_name'] == var_name].label.values[0]
+
