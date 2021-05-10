@@ -1,5 +1,6 @@
-from causallib.estimation import IPW, MarginalOutcomeEstimator
-from causallib.evaluation import PropensityEvaluator
+from causallib.estimation import IPW, MarginalOutcomeEstimator, StratifiedStandardization
+from causallib.evaluation import PropensityEvaluator, OutcomeEvaluator
+from causallib.estimation import DoublyRobustVanilla
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -43,8 +44,7 @@ def weighted_auc_scorer(clf, X, a_true):
     return 1 - abs(score - 0.5)
 
 
-def model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid'):
-    
+def basemodel(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid', scoring=weighted_auc_scorer):
     X_df, a, y = get_data(data_path, encode=encode)
     
     X_df = X_df[~y.isna()]
@@ -58,7 +58,15 @@ def model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoi
     base_estimator = LogisticRegression(penalty="l2", max_iter=3000, class_weight="balanced", random_state=2, solver='lbfgs')
     learner = CalibratedClassifierCV(base_estimator=base_estimator, cv=3, method=method)
     param_grid = {'base_estimator__C': np.logspace(-2, 0, 20)}
-    search = GridSearchCV(learner, param_grid, cv=3, scoring=weighted_auc_scorer)
+    search = GridSearchCV(learner, param_grid, cv=3, scoring=scoring)
+
+    return search, X_train, X_test, a_train, a_test, y_train, y_test
+
+
+
+def propensity_model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid'):
+    
+    search, X_train, X_test, a_train, a_test, y_train, y_test = basemodel(data_path, encode, method)
 
     ipw = IPW(make_pipeline(StandardScaler(), search), use_stabilized=True)
     ipw.fit(X_train, a_train)
@@ -69,6 +77,32 @@ def model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoi
     evaluations = causal_eval(ipw,  X_test, a_test, y_test)
     return evaluations, X_test, a_test, y_test
 
+def outcome_model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid', scoring=weighted_auc_scorer):
+
+    search, X_train, X_test, a_train, a_test, y_train, y_test = basemodel(data_path, encode, method, scoring=scoring)
+    std = StratifiedStandardization(make_pipeline(StandardScaler(), search))
+
+    std.fit(X_train, a_train, y_train)
+    plots = ["common_support"]
+    
+    evaluator = OutcomeEvaluator(std)
+    evaluations = evaluator.evaluate_simple(X_test.astype(float), a_test, y_test, evaluator._numerical_classification_metrics, plots)
+
+    fig = evaluations.plots['common_support'].get_figure()
+    fig.set_size_inches(4, 4) 
+    
+    timestamp = str(int(time.time()))
+    plt.tight_layout()
+    
+#     fig.savefig(folder + 'figures/causaleval' + timestamp + '.pdf')
+    
+    return evaluations, X_test, a_test, y_test
+
+def dr_model():
+    # dr = DoublyRobustVanilla(std, ipw)
+    # dr.fit(X_train[~y_train.isna()], a_train[~y_train.isna()], y_train[~y_train.isna()], refit_weight_model=False)
+
+    pass
 
 def causal_eval(model, X_test, a_test, y_test):
     
@@ -148,7 +182,9 @@ def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 1000, title="di
     return median, lower, upper
 
 
-def placebo_effects(ipw, X_test, a_test, y_test, n_bootstrap=1000, title="distribution of placebo"):
+def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="distribution of placebo"):
+    
+    ipw = IPW(make_pipeline(StandardScaler(), basemodel), use_stabilized=True)
     
     placebo_effects = []
     p_a = a_test.mean()
