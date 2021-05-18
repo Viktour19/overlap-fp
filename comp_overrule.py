@@ -41,12 +41,11 @@ DATA_PATH = folder + 'data/fp_select.csv'
 
 def overrulefit(X_df_sample, a_sample, LAMBDA0_s=None, LAMBDA1_s=None, model=None, LAMBDA0_o=None, LAMBDA1_o=None, RS_s = None, only_support=False):
     
-    f_cols = X_df_sample.columns
     O = propscore.PropensityOverlapEstimator(estimator=model)
     
     if RS_s is None:
         RS_s = BCSRulesetEstimator(n_ref_multiplier=N_REF_MULT_s, alpha=ALPHA_s, lambda0=LAMBDA0_s, lambda1=LAMBDA1_s, B=B, CNF=CNF, 
-                                   cat_cols=CAT_COLS, seed=SEED, K=K, D=D, binarizer='tree')
+                                   cat_cols=CAT_COLS, seed=SEED, K=K, D=D, binarizer='default')
         RS_s.fit(X_df_sample, a_sample)
     
     if only_support:
@@ -81,6 +80,10 @@ def overrulefit(X_df_sample, a_sample, LAMBDA0_s=None, LAMBDA1_s=None, model=Non
 def learn_srules(logspace=10, data_path = DATA_PATH):
     
     X_df, a, y = get_data(data_path)
+    
+    X_df = X_df[~y.isna()]
+    a = a[~y.isna()]
+    y = y[~y.isna()]
 
     LAMBDA_0 = np.logspace(-7, -0.1, logspace)
     LAMBDA_1 = np.logspace(-7, -0.1, logspace)

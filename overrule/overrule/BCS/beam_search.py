@@ -147,12 +147,16 @@ def beam_search(r, X, lambda0, lambda1, K=1, UB=0, D=10, B=5, wLB=0.5, eps=1e-6)
                 colKeep = pd.Series(Xp.columns.get_level_values(0) != i[0], index=Xp.columns)
                 if i[1] == '<=':
                     thresh = Xp[i[0]].columns.get_level_values(1).to_series().replace('NaN', np.nan)
-                    colKeep[i[0]] = (Xp[i[0]].columns.get_level_values(0) == '>') & (thresh < i[2])
+                    try:
+                        colKeep[i[0]] = ((Xp[i[0]].columns.get_level_values(0) == '>') & (thresh < i[2])).values
+                    except:
+                        print(colKeep[i[0]])
+                        return
                 elif i[1] == '>':
                     thresh = Xp[i[0]].columns.get_level_values(1).to_series().replace('NaN', np.nan)
-                    colKeep[i[0]] = (Xp[i[0]].columns.get_level_values(0) == '<=') & (thresh > i[2])
+                    colKeep[i[0]] = ((Xp[i[0]].columns.get_level_values(0) == '<=') & (thresh > i[2])).values
                 elif i[1] == '!=':
-                    colKeep[i[0]] = (Xp[i[0]].columns.get_level_values(0) == '!=') & (Xp[i[0]].columns.get_level_values(1) != i[2])
+                    colKeep[i[0]] = ((Xp[i[0]].columns.get_level_values(0) == '!=') & (Xp[i[0]].columns.get_level_values(1) != i[2])).values
                 Xp = Xp.loc[:, colKeep]
                 Xn = Xn.loc[:, colKeep]
                 instNext.append(PricingInstance(rp, rn, Xp, Xn, inst.v1[i], z0))
