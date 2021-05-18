@@ -2,7 +2,7 @@ from causallib.estimation import IPW, MarginalOutcomeEstimator, StratifiedStanda
 from causallib.evaluation import PropensityEvaluator, OutcomeEvaluator
 from causallib.estimation import DoublyRobustVanilla
 
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, PoissonRegressor, SGDClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -77,10 +77,21 @@ def propensity_model(data_path = folder + 'data/fp_select.csv', encode=True, met
     evaluations = causal_eval(ipw,  X_test, a_test, y_test)
     return evaluations, X_test, a_test, y_test
 
-def outcome_model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid', scoring=weighted_auc_scorer):
+def outcome_model(data_path = folder + 'data/fp_select.csv', encode=True, scoring='roc_auc'):
 
-    search, X_train, X_test, a_train, a_test, y_train, y_test = basemodel(data_path, encode, method, scoring=scoring)
-    std = StratifiedStandardization(make_pipeline(StandardScaler(), search))
+    X_df, a, y = get_data(data_path, encode=encode)
+    
+    X_df = X_df[~y.isna()]
+    a = a[~y.isna()]
+    y = y[~y.isna()]
+
+    strartify_by = (a*2) + y
+    X_train, X_test, a_train, a_test, y_train, y_test = train_test_split(X_df, a, y, train_size=0.7, test_size=0.3, shuffle=True, \
+                                                                         random_state=1, stratify=strartify_by)
+    
+    base_estimator = LogisticRegression(penalty="l2", max_iter=2000, class_weight="balanced", random_state=2, solver='liblinear')
+    learner = CalibratedClassifierCV(base_estimator=base_estimator, cv=3, method='sigmoid')
+    std = StratifiedStandardization(make_pipeline(StandardScaler(), learner))
 
     std.fit(X_train, a_train, y_train)
     plots = ["common_support"]
