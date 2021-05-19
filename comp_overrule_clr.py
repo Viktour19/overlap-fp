@@ -24,6 +24,9 @@ DATA_PATH = folder + 'data/fp_select.csv'
 def model(data_path = DATA_PATH, encode=True):
     
     X_df, a, y = get_data(data_path, encode=encode)
+    X_df = X_df[~y.isna()]
+    a = a[~y.isna()]
+    y = y[~y.isna()]
     
     base_estimator = LogisticRegression(penalty="l2", max_iter=2000, class_weight="balanced", random_state=2, solver='lbfgs')
     param_grid = {'C': np.logspace(-5, 0, 20)}
@@ -44,7 +47,12 @@ def learn_orules(LAMBDA0_s=0.1, LAMBDA1_s=0.1, logspace=10, data_path = DATA_PAT
         clrmodel, X_df, a = model(data_path)
         write_model(clrmodel, 'clrmodel')
     else:
-        X_df, a, _ = get_data(data_path)
+        X_df, a, y = get_data(data_path)
+        
+        X_df = X_df[~y.isna()]
+        a = a[~y.isna()]
+        y = y[~y.isna()]
+        
         clrmodel = cmodel
     
     LAMBDA_0 = np.logspace(-7, -0.1, logspace)

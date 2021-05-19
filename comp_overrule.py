@@ -45,7 +45,7 @@ def overrulefit(X_df_sample, a_sample, LAMBDA0_s=None, LAMBDA1_s=None, model=Non
     
     if RS_s is None:
         RS_s = BCSRulesetEstimator(n_ref_multiplier=N_REF_MULT_s, alpha=ALPHA_s, lambda0=LAMBDA0_s, lambda1=LAMBDA1_s, B=B, CNF=CNF, 
-                                   cat_cols=CAT_COLS, seed=SEED, K=K, D=D, binarizer='default')
+                                   cat_cols=CAT_COLS, seed=SEED, K=K, D=D, binarizer='tree')
         RS_s.fit(X_df_sample, a_sample)
     
     if only_support:
@@ -111,6 +111,10 @@ def learn_s_orules(model_path, LAMBDA0_s, LAMBDA1_s, LAMBDA0_o, LAMBDA1_o, data_
     
     model = read_model(model_path)
     X_df, a, y = get_data(data_path, encode=encode)
+    
+    X_df = X_df[~y.isna()]
+    a = a[~y.isna()]
+    y = y[~y.isna()]
     
     M, RS_s, RS_o, auc, score_base = overrulefit(X_df, a, LAMBDA0_s=LAMBDA0_s, LAMBDA1_s=LAMBDA1_s, LAMBDA0_o=LAMBDA0_o, LAMBDA1_o=LAMBDA1_o, model=model, only_support=only_support)
 

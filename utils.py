@@ -134,7 +134,19 @@ def covbal_eval(eval, n):
 
     return encoding[encoding['var_name'].isin(varnames)].label.values
 
-def description(var_name):
-    encoding = pd.read_csv(folder + 'data/encoding.csv')
-    return encoding[encoding['var_name'] == var_name].label.values[0]
+def description(varname, var_encoding_path=None):
+    
+    var_encoding = get_varencoding(path=var_encoding_path)
+    
+    if '_' in varname:
+        level = varname.split("_")[1]
+        var = varname.split("_")[0]
+    
+        var_str = get_lbl(var)
+        level_str = var_encoding[var][level]
+    else:
+        var_str = get_lbl(varname)
+        level_str = ''
+    
+    return var_str + ' ' + level_str
 
