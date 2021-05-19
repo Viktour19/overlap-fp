@@ -24,6 +24,8 @@ import warnings
 import time
 from tqdm import tqdm
 
+from OW import OW
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 folder = '/home/victora/PositivityViolation/'
@@ -68,7 +70,7 @@ def propensity_model(data_path = folder + 'data/fp_select.csv', encode=True, met
     
     search, X_train, X_test, a_train, a_test, y_train, y_test = basemodel(data_path, encode, method)
 
-    ipw = IPW(make_pipeline(StandardScaler(), search), use_stabilized=True)
+    ipw = OW(make_pipeline(StandardScaler(), search), use_stabilized=True)
     ipw.fit(X_train, a_train)
     
 #     ipw = IPW(make_pipeline(StandardScaler(), ipw.learner.steps[1][1].best_estimator_), use_stabilized=True)
