@@ -201,7 +201,7 @@ def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="
     if model == 'ipw':
         cmodel = IPW(make_pipeline(StandardScaler(), basemodel), use_stabilized=True)
     else:
-        cmodel = OW(make_pipeline(StandardScaler(), search), use_stabilized=True)
+        cmodel = OW(make_pipeline(StandardScaler(), basemodel), use_stabilized=True)
     
     
     placebo_effects = []
