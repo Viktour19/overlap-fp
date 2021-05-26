@@ -229,3 +229,10 @@ def get_overlap_violations(RS_s, RS_o, data_path = DATA_PATH, encode=True):
     overlap_index = list(intersection)
 
     return overlap_index, violating_index
+
+def get_overlap(RS_s, data_path = DATA_PATH, encode=True):
+    
+    X_df, _, _ = get_data(data_path, encode=encode)
+    support_set = X_df[eval(rule_str(RS_s.rules()))]
+    
+    return list(support_set.index)
