@@ -66,17 +66,18 @@ def basemodel(data_path = folder + 'data/fp_select.csv', encode=True, method='si
 
 
 
-def propensity_model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid'):
+def propensity_model(data_path = folder + 'data/fp_select.csv', encode=True, method='sigmoid', model='ipw'):
     
     search, X_train, X_test, a_train, a_test, y_train, y_test = basemodel(data_path, encode, method)
+    
+    if model == 'ipw':
+        cmodel = IPW(make_pipeline(StandardScaler(), search), use_stabilized=True)
+    else:
+        cmodel = OW(make_pipeline(StandardScaler(), search), use_stabilized=True)
+    
+    cmodel.fit(X_train, a_train)
+    evaluations = causal_eval(ow,  X_test, a_test, y_test)
 
-    ipw = OW(make_pipeline(StandardScaler(), search), use_stabilized=True)
-    ipw.fit(X_train, a_train)
-    
-#     ipw = IPW(make_pipeline(StandardScaler(), ipw.learner.steps[1][1].best_estimator_), use_stabilized=True)
-#     ipw.fit(X_train, a_train)
-    
-    evaluations = causal_eval(ipw,  X_test, a_test, y_test)
     return evaluations, X_test, a_test, y_test
 
 def outcome_model(data_path = folder + 'data/fp_select.csv', encode=True, scoring='roc_auc'):
@@ -167,7 +168,7 @@ def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 
     
     return median, lower, upper
     
-def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 1000, title="distribution of ATE", effect_type='or'):
+def bootstrap_effects(cmodel, X_test, a_test, y_test, n_bootstrap = 1000, title="distribution of ATE", effect_type='or'):
 
     effects = []
     for i in tqdm(range(n_bootstrap)):
@@ -177,8 +178,8 @@ def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 1000, title="di
         a_r = a_r.reset_index(drop=True)
         y_r = y_r.reset_index(drop=True)
 
-        potential_outcomes = ipw.estimate_population_outcome(X_r, a_r, y_r)
-        causal_effect = ipw.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types=effect_type)[effect_type]
+        potential_outcomes = cmodel.estimate_population_outcome(X_r, a_r, y_r)
+        causal_effect = cmodel.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types=effect_type)[effect_type]
         effects.append(causal_effect)
         
     plt.hist(effects)
@@ -195,9 +196,13 @@ def bootstrap_effects(ipw, X_test, a_test, y_test, n_bootstrap = 1000, title="di
     return median, lower, upper
 
 
-def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="distribution of placebo"):
+def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="distribution of placebo", model = 'ipw'):
     
-    ipw = IPW(make_pipeline(StandardScaler(), basemodel), use_stabilized=True)
+    if model == 'ipw':
+        cmodel = IPW(make_pipeline(StandardScaler(), basemodel), use_stabilized=True)
+    else:
+        cmodel = OW(make_pipeline(StandardScaler(), search), use_stabilized=True)
+    
     
     placebo_effects = []
     p_a = a_test.mean()
@@ -210,9 +215,9 @@ def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="
         X_boots = X_boots.reset_index(drop=True)
         y_boots = y_boots.reset_index(drop=True)
 
-        ipw.fit(X_boots, random_a)
-        potential_outcomes = ipw.estimate_population_outcome(X_boots, random_a, y_boots)
-        placebo_effects.append(ipw.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types="or")['or'])
+        cmodel.fit(X_boots, random_a)
+        potential_outcomes = cmodel.estimate_population_outcome(X_boots, random_a, y_boots)
+        placebo_effects.append(cmodel.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types="or")['or'])
     
     plt.hist(placebo_effects)
     plt.title(title)
