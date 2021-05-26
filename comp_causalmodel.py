@@ -76,7 +76,7 @@ def propensity_model(data_path = folder + 'data/fp_select.csv', encode=True, met
         cmodel = OW(make_pipeline(StandardScaler(), search), use_stabilized=True)
     
     cmodel.fit(X_train, a_train)
-    evaluations = causal_eval(ow,  X_test, a_test, y_test)
+    evaluations = causal_eval(cmodel,  X_test, a_test, y_test)
 
     return evaluations, X_test, a_test, y_test
 
@@ -225,5 +225,9 @@ def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="
     timestamp = str(int(time.time()))
     plt.tight_layout()
     plt.savefig(folder + 'figures/placeboeffects' + timestamp + '.pdf')
+  
+    median = np.nanmedian(placebo_effects)
+    lower = np.nanpercentile(placebo_effects, 2.5)
+    upper = np.nanpercentile(placebo_effects, 97.5)
     
-    return np.mean(placebo_effects)
+    return median, lower, upper
