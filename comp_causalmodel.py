@@ -133,7 +133,7 @@ def causal_eval(model, X_test, a_test, y_test):
     
     return evaluations
 
-def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 1000, title="distribution of marginal diff", effect_type='or'):
+def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 1000, title="distribution of marginal diff", effect_type='diff'):
     
     X_df, a, y = get_data(data_path)
     X_df = X_df[~y.isna()]
@@ -168,7 +168,7 @@ def bootstrap_marginal(data_path = folder + 'data/fp_select.csv', n_bootstrap = 
     
     return median, lower, upper
     
-def bootstrap_effects(cmodel, X_test, a_test, y_test, n_bootstrap = 1000, title="distribution of ATE", effect_type='or'):
+def bootstrap_effects(cmodel, X_test, a_test, y_test, n_bootstrap = 1000, title="distribution of ATE", effect_type='diff'):
 
     effects = []
     for i in tqdm(range(n_bootstrap)):
@@ -217,7 +217,7 @@ def placebo_effects(basemodel, X_test, a_test, y_test, n_bootstrap=1000, title="
 
         cmodel.fit(X_boots, random_a)
         potential_outcomes = cmodel.estimate_population_outcome(X_boots, random_a, y_boots)
-        placebo_effects.append(cmodel.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types="or")['or'])
+        placebo_effects.append(cmodel.estimate_effect(potential_outcomes[1], potential_outcomes[0], effect_types="diff")['diff'])
     
     plt.hist(placebo_effects)
     plt.title(title)
