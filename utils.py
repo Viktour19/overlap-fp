@@ -125,6 +125,18 @@ def recent_model(name):
     if len(times) > 0:
         recent_model = files[np.argsort(times)[-1]]
         return recent_model
+    
+def recent_selectfile():
+    
+    files = []
+    times = []
+    for file_name in glob.glob('data/fp_select' + '*.csv'):
+        files.append(file_name)
+        times.append(int(file_name.split('_')[1].split('.')[0].replace('select', '')))
+    
+    if len(times) > 0:
+        recent_file = files[np.argsort(times)[-1]]
+        return recent_file
 
 def covbal_eval(eval, n):
 
